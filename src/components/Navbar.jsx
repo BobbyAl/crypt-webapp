@@ -17,7 +17,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           {/* Left - Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center text-white font-bold text-xl">
+            <Link href="/dashboard" className="flex items-center text-white font-bold text-xl">
               CryptoSite
             </Link>
           </div>
@@ -81,7 +81,7 @@ export default function Navbar() {
                       Key Generation
                     </Link>
                     <Link
-                      href="/steg"
+                      href="/steganography"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                       onClick={() => setIsModesOpen(false)}
                     >
