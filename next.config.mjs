@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  basePath: '/encrypt-site',
+  basePath: '/crypt-webapp',
   images: {
     unoptimized: true,
   },
