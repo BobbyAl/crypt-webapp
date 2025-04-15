@@ -16,9 +16,17 @@ export default function EncryptPage() {
   const [encryptedFileName, setEncryptedFileName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const RSA_MAX_SIZE = 190; // Maximum size in bytes for RSA-2048 with OAEP padding
+
   const handleEncrypt = async () => {
     if (!file || (!key && method !== "rsa")) {
       alert("Please select a file and enter a key (except RSA).");
+      return;
+    }
+
+    // Check file size for RSA
+    if (method === "rsa" && file.size > RSA_MAX_SIZE) {
+      alert(`RSA encryption is limited to files smaller than ${RSA_MAX_SIZE} bytes. Your file is ${file.size} bytes. Please use AES or 3DES for larger files.`);
       return;
     }
 
@@ -92,11 +100,26 @@ export default function EncryptPage() {
         >
           <option value="aes">AES</option>
           <option value="3des">3DES</option>
-          <option value="rsa">RSA</option>
+          <option value="rsa">RSA (max file size: 190 bytes)</option>
         </select>
 
         {/* Key input */}
-        {method !== "rsa" && (
+        {method === "rsa" ? (
+          <>
+            <label className="block text-sm font-semibold mb-2 text-gray-300">
+              <div className="flex items-center">
+                <FaKey className="w-4 h-4 mr-2" />
+                Public Key
+              </div>
+            </label>
+            <textarea
+              placeholder="Paste RSA public key here"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              className="mb-6 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white h-32 font-mono"
+            />
+          </>
+        ) : (
           <>
             <label className="block text-sm font-semibold mb-2 text-gray-300">
               <div className="flex items-center">

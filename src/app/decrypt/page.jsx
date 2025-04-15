@@ -90,10 +90,25 @@ export default function DecryptPage() {
         >
           <option value="aes">AES</option>
           <option value="3des">3DES</option>
-          <option value="rsa">RSA</option>
+          <option value="rsa">RSA (max file size: 190 bytes)</option>
         </select>
 
-        {method !== "rsa" && (
+        {method === "rsa" ? (
+          <>
+            <label className="block text-sm font-semibold mb-2 text-gray-300">
+              <div className="flex items-center">
+                <FaKey className="w-4 h-4 mr-2" />
+                Private Key
+              </div>
+            </label>
+            <textarea
+              placeholder="Paste RSA private key here"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              className="mb-6 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white h-32 font-mono"
+            />
+          </>
+        ) : (
           <>
             <label className="block text-sm font-semibold mb-2 text-gray-300">
               <div className="flex items-center">
