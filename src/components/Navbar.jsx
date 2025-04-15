@@ -8,9 +8,9 @@ import { FaChevronDown, FaUser, FaTachometerAlt, FaLock } from 'react-icons/fa';
 export default function Navbar() {
   const [isModesOpen, setIsModesOpen] = useState(false);
   const pathname = usePathname();
-
-  const isActive = (path) => pathname === `/crypt-webapp${path}`;
   const basePath = '/crypt-webapp';
+
+  const isActive = (path) => pathname === `${basePath}${path}`;
 
   return (
     <nav className="bg-[#111827] shadow-lg">

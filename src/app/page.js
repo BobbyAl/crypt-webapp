@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -7,18 +7,18 @@ export default function Home() {
         Welcome to Crypt
       </h1>
       <div className="flex gap-6">
-        <a
-          href="/login"
+        <Link
+          href="/crypt-webapp/login"
           className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
         >
           Login
-        </a>
-        <a
-          href="/register"
+        </Link>
+        <Link
+          href="/crypt-webapp/register"
           className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
         >
           Register
-        </a>
+        </Link>
       </div>
     </div>
   );
