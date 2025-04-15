@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth } from "@/firebase/config";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaEnvelope, FaLock } from "react-icons/fa";
@@ -31,17 +31,9 @@ export default function RegisterPage() {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push(`${basePath}/dashboard`);
+      router.push("/crypt-webapp/dashboard");
     } catch (err) {
-      let errorMessage = "Failed to create an account.";
-      if (err.code === "auth/email-already-in-use") {
-        errorMessage = "This email is already registered. Please use a different email.";
-      } else if (err.code === "auth/weak-password") {
-        errorMessage = "Password is too weak. Please use a stronger password.";
-      } else if (err.code === "auth/invalid-email") {
-        errorMessage = "Invalid email address. Please check your email.";
-      }
-      setError(errorMessage);
+      setError("Failed to create an account. Please try again.");
       console.error(err);
     }
 
