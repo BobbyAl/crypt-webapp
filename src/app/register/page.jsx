@@ -15,7 +15,6 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const basePath = "/crypt-webapp";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,7 +29,7 @@ export default function RegisterPage() {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push(`${basePath}/dashboard`);
+      router.push("/crypt-webapp/dashboard");
     } catch (err) {
       setError("Failed to create an account. Please try again.");
       console.error(err);
@@ -110,7 +109,7 @@ export default function RegisterPage() {
 
           <div className="text-center">
             <Link
-              href={`${basePath}/login`}
+              href="/crypt-webapp/login"
               className="font-medium text-blue-400 hover:text-blue-500"
             >
               Already have an account? Sign in here
