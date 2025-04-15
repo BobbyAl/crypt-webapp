@@ -12,13 +12,24 @@ export default function EncryptPage() {
   const [file, setFile] = useState(null);
   const [method, setMethod] = useState("aes");
   const [key, setKey] = useState("");
+  const [publicKey, setPublicKey] = useState("");
   const [encryptedFileUrl, setEncryptedFileUrl] = useState(null);
   const [encryptedFileName, setEncryptedFileName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleEncrypt = async () => {
-    if (!file || (!key && method !== "rsa")) {
-      alert("Please select a file and enter a key (except RSA).");
+    if (!file) {
+      alert("Please select a file to encrypt.");
+      return;
+    }
+    
+    if (method === "rsa" && !publicKey) {
+      alert("Please enter a public key for RSA encryption.");
+      return;
+    }
+    
+    if (method !== "rsa" && !key) {
+      alert("Please enter an encryption key.");
       return;
     }
 
@@ -26,7 +37,7 @@ export default function EncryptPage() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("method", method);
-    formData.append("key", key);
+    formData.append("key", method === "rsa" ? publicKey : key);
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/encrypt`, {
@@ -96,7 +107,22 @@ export default function EncryptPage() {
         </select>
 
         {/* Key input */}
-        {method !== "rsa" && (
+        {method === "rsa" ? (
+          <>
+            <label className="block text-sm font-semibold mb-2 text-gray-300">
+              <div className="flex items-center">
+                <FaKey className="w-4 h-4 mr-2" />
+                Public Key
+              </div>
+            </label>
+            <textarea
+              placeholder="Paste RSA public key here"
+              value={publicKey}
+              onChange={(e) => setPublicKey(e.target.value)}
+              className="mb-6 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white h-32 font-mono"
+            />
+          </>
+        ) : (
           <>
             <label className="block text-sm font-semibold mb-2 text-gray-300">
               <div className="flex items-center">
@@ -118,7 +144,7 @@ export default function EncryptPage() {
         <button
           onClick={handleEncrypt}
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <FaLock className="w-4 h-4 mr-2" />
           {loading ? "Encrypting..." : "Encrypt"}
