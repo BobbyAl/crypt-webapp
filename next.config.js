@@ -1,11 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',  // Enable static exports
+  output: 'export',
   images: {
-    unoptimized: true, // Required for static export
+    unoptimized: true,
   },
-  basePath: '/crypt-webapp', // Will be the name of your GitHub repository
-  assetPrefix: '/crypt-webapp/', // Will be the name of your GitHub repository
+  basePath: '/crypt-webapp',
+  assetPrefix: '/crypt-webapp/',
+  trailingSlash: true,
 }
 
-module.exports = nextConfig 
+module.exports = nextConfig
