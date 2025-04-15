@@ -1,36 +1,119 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🔐 CryptWebApp
 
-## Getting Started
+A secure, full-stack cryptography utility built with **Next.js**, **TailwindCSS**, **Firebase**, and a **Flask backend**. This web application enables users to:
 
-First, run the development server:
+- Encrypt and decrypt files (AES, 3DES, RSA)
+- Hash files (SHA-2, SHA-3)
+- Compare file hashes
+- Generate and share cryptographic keys
+- Simulate Diffie-Hellman key exchange
+- Generate secure passwords
+- Save keys/files securely to Firebase
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🚀 Technologies Used
+
+### Frontend
+- Next.js 13 (App Router)
+- TailwindCSS
+- Firebase Auth
+- Firebase Firestore
+- Firebase Storage
+
+### Backend
+- Python Flask
+- Cryptography library
+- CORS enabled for frontend-backend communication
+
+---
+
+## 📦 Project Structure
+```
+crypt-webapp/      # Next.js frontend
+  ├── src/app/
+  │   ├── encrypt/      # File encryption page
+  │   ├── decrypt/      # File decryption page
+  │   ├── hash/         # File hashing & comparison
+  │   ├── keygen/       # Key generation & DH simulation
+  │   ├── dashboard/    # Authenticated user dashboard
+  │   └── firebase/     # Firebase config
+
+backend/          # Flask backend
+  ├── app.py          # Flask app routes
+  └── crypto_utils.py # AES, 3DES, RSA, Hashing logic
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## 📋 Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🔐 Encryption / Decryption
+- AES (128-bit, 256-bit)
+- 3DES
+- RSA (2048-bit public/private key)
 
-## Learn More
+### 🧪 Hashing
+- SHA-256
+- SHA3-512
+- Upload two files and compare hashes
 
-To learn more about Next.js, take a look at the following resources:
+### 🔑 Key & Password Generation
+- AES & RSA key generation
+- Password generator (length, symbols, uppercase)
+- Diffie-Hellman key exchange simulation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 🗂 File/Key Management
+- Upload files to encrypt or hash
+- Save encrypted files to Firebase Storage
+- Save key metadata to Firestore
+- View saved items in dashboard
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 👤 User Authentication
+- Firebase Auth (email/password)
+- Login, register, logout
+- Authenticated dashboard access
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔧 Running the Project
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 1. Clone the Repo
+```
+git clone https://github.com/your-username/cryptoencrypt-webapp.git
+cd cryptoencrypt-webapp
+```
+
+### 2. Start Backend (Flask)
+```
+cd backend
+pip install -r requirements.txt
+python app.py
+```
+Server will run at `http://localhost:5000`
+
+### 3. Start Frontend (Next.js)
+```
+cd crypt-webapp
+npm install
+npm run dev
+```
+App runs at `http://localhost:3000`
+
+---
+
+## 🛡️ Security Notes
+- AES/3DES uses CBC mode and random IV
+- RSA keys are generated client-side (private keys never leave the browser)
+- All user data is scoped per user in Firebase
+- Backend protected via CORS and file validation
+
+---
+
+## ✨ Credits
+Created by Bobby [or Your Name Here] for an Information Security project
+
+---
+
+## 📄 License
+MIT
