@@ -3,10 +3,12 @@
 
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/firebase/config";
+import { auth } from "../firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaEnvelope, FaLock } from "react-icons/fa";
+
+const basePath = "/crypt-webapp";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -29,9 +31,17 @@ export default function RegisterPage() {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push("/crypt-webapp/dashboard");
+      router.push(`${basePath}/dashboard`);
     } catch (err) {
-      setError("Failed to create an account. Please try again.");
+      let errorMessage = "Failed to create an account.";
+      if (err.code === "auth/email-already-in-use") {
+        errorMessage = "This email is already registered. Please use a different email.";
+      } else if (err.code === "auth/weak-password") {
+        errorMessage = "Password is too weak. Please use a stronger password.";
+      } else if (err.code === "auth/invalid-email") {
+        errorMessage = "Invalid email address. Please check your email.";
+      }
+      setError(errorMessage);
       console.error(err);
     }
 
@@ -109,7 +119,7 @@ export default function RegisterPage() {
 
           <div className="text-center">
             <Link
-              href="/crypt-webapp/login"
+              href={`${basePath}/login`}
               className="font-medium text-blue-400 hover:text-blue-500"
             >
               Already have an account? Sign in here
