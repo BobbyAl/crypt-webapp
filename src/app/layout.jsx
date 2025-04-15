@@ -2,7 +2,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 
 export const metadata = {
-  title: 'CryptoSite',
+  title: 'Crypt',
   description: 'Secure cryptography utility for file encryption, decryption, and key management',
 };
 
