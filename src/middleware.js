@@ -1,25 +1,28 @@
 import { NextResponse } from 'next/server'
 
 export function middleware(request) {
-  // Get the pathname of the request
-  const path = request.nextUrl.pathname
+  // Get the pathname of the request and remove the base path
+  const path = request.nextUrl.pathname.replace('/crypt-webapp', '')
 
   // Define public paths that don't require authentication
-  const isPublicPath = path === '/crypt-webapp/' || 
-                      path === '/crypt-webapp/login' || 
-                      path === '/crypt-webapp/register'
+  const isPublicPath = path === '/' || 
+                      path === '/login' || 
+                      path === '/register'
 
   // Get the token from the cookies
   const token = request.cookies.get('token')?.value || ''
 
+  // Get the base URL for redirects
+  const baseUrl = new URL('/crypt-webapp', request.url).toString().replace(/\/$/, '')
+
   // Redirect authenticated users away from login/register pages
   if (isPublicPath && token) {
-    return NextResponse.redirect(new URL('/crypt-webapp/dashboard', request.url))
+    return NextResponse.redirect(`${baseUrl}/dashboard`)
   }
 
   // Redirect unauthenticated users to login page
   if (!isPublicPath && !token) {
-    return NextResponse.redirect(new URL('/crypt-webapp/login', request.url))
+    return NextResponse.redirect(`${baseUrl}/login`)
   }
 }
 

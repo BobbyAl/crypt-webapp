@@ -8,13 +8,13 @@ export default function Home() {
       </h1>
       <div className="flex gap-6">
         <Link
-          href="/crypt-webapp/login"
+          href="/login"
           className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
         >
           Login
         </Link>
         <Link
-          href="/crypt-webapp/register"
+          href="/register"
           className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
         >
           Register
