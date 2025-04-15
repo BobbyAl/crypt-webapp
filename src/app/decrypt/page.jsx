@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { auth, db } from "@/firebase/config";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { 
   FaLockOpen, 
   FaUpload, 
   FaKey, 
-  FaDownload 
+  FaDownload,
+  FaSave
 } from "react-icons/fa";
 
 export default function DecryptPage() {
@@ -15,6 +18,27 @@ export default function DecryptPage() {
   const [decryptedFileUrl, setDecryptedFileUrl] = useState(null);
   const [decryptedFileName, setDecryptedFileName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: "", type: "" });
+
+  const handleSaveFile = async () => {
+    if (!auth.currentUser) {
+      setMessage({ text: "Please login to save files", type: "error" });
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "users", auth.currentUser.uid, "files"), {
+        name: decryptedFileName,
+        type: "decrypted",
+        method: method.toUpperCase(),
+        createdAt: serverTimestamp()
+      });
+      setMessage({ text: "File saved to account!", type: "success" });
+    } catch (error) {
+      console.error("Error saving file:", error);
+      setMessage({ text: "Failed to save file", type: "error" });
+    }
+  };
 
   const handleDecrypt = async () => {
     if (!file || (!key && method !== "rsa")) {
@@ -52,7 +76,7 @@ export default function DecryptPage() {
       setDecryptedFileUrl(url);
     } catch (err) {
       console.error("Decryption error:", err);
-      alert("Decryption failed: " + err.message);
+      setMessage({ text: "Decryption failed: " + err.message, type: "error" });
     } finally {
       setLoading(false);
     }
@@ -64,6 +88,18 @@ export default function DecryptPage() {
         <h1 className="text-3xl font-bold mb-6 text-center text-white flex items-center justify-center">
           Decrypt File <FaLockOpen className="ml-3 w-8 h-8" />
         </h1>
+
+        {message.text && (
+          <div
+            className={`mb-4 p-3 rounded ${
+              message.type === "error"
+                ? "bg-red-500/10 text-red-500"
+                : "bg-green-500/10 text-green-500"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
 
         <label className="block text-sm font-semibold mb-2 text-gray-300">
           <div className="flex items-center">
@@ -105,7 +141,7 @@ export default function DecryptPage() {
               placeholder="Paste RSA private key here"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              className="mb-6 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white h-32 font-mono"
+              className="mb-6 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm h-32 font-mono"
             />
           </>
         ) : (
@@ -136,14 +172,25 @@ export default function DecryptPage() {
         </button>
 
         {decryptedFileUrl && (
-          <a
-            href={decryptedFileUrl}
-            download={decryptedFileName}
-            className="block mt-6 text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition flex items-center justify-center"
-          >
-            <FaDownload className="w-4 h-4 mr-2" />
-            Download Decrypted File
-          </a>
+          <div className="mt-6 space-y-4">
+            <a
+              href={decryptedFileUrl}
+              download={decryptedFileName}
+              className="block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition flex items-center justify-center"
+            >
+              <FaDownload className="w-4 h-4 mr-2" />
+              Download Decrypted File
+            </a>
+            
+            <button
+              onClick={handleSaveFile}
+              disabled={!auth.currentUser}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50"
+            >
+              <FaSave className="w-4 h-4 mr-2" />
+              {auth.currentUser ? "Save to Account" : "Login to Save"}
+            </button>
+          </div>
         )}
       </div>
     </div>

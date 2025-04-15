@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { auth, db } from "@/firebase/config";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, setDoc } from "firebase/firestore";
 import {
   FaKey,
   FaCopy,
@@ -13,7 +13,8 @@ import {
   FaTimes,
   FaFont,
   FaHashtag,
-  FaAsterisk
+  FaAsterisk,
+  FaSave
 } from "react-icons/fa";
 
 export default function KeygenPage() {
@@ -30,7 +31,8 @@ export default function KeygenPage() {
     aes: false,
     rsa: false,
     dh: false,
-    password: false
+    password: false,
+    save: false
   });
 
   const handleCopy = async (text, label) => {
@@ -41,6 +43,28 @@ export default function KeygenPage() {
     } catch (err) {
       setCopyFeedback("Failed to copy");
       setTimeout(() => setCopyFeedback(""), 2000);
+    }
+  };
+
+  const saveKeyToAccount = async (keyType, keyValue) => {
+    if (!auth.currentUser) {
+      setCopyFeedback("Please login to save keys");
+      return;
+    }
+
+    setLoading(prev => ({ ...prev, save: true }));
+    try {
+      await addDoc(collection(db, "users", auth.currentUser.uid, "keys"), {
+        type: keyType,
+        value: keyValue,
+        createdAt: serverTimestamp()
+      });
+      setCopyFeedback(`${keyType} key saved to account!`);
+    } catch (error) {
+      console.error('Error saving key:', error);
+      setCopyFeedback('Failed to save key');
+    } finally {
+      setLoading(prev => ({ ...prev, save: false }));
     }
   };
 
@@ -59,6 +83,11 @@ export default function KeygenPage() {
   };
 
   const generateRsaKeyPair = async () => {
+    if (!auth.currentUser) {
+      setCopyFeedback("Please login to generate RSA keys");
+      return;
+    }
+
     try {
       setLoading(prev => ({ ...prev, rsa: true }));
       const keyPair = await window.crypto.subtle.generateKey(
@@ -78,31 +107,17 @@ export default function KeygenPage() {
       const pubBase64 = btoa(String.fromCharCode(...new Uint8Array(publicKey)));
       const privBase64 = btoa(String.fromCharCode(...new Uint8Array(privateKey)));
 
+      // Store RSA keys in user's document
+      await setDoc(doc(db, "users", auth.currentUser.uid), {
+        rsaKeys: {
+          publicKey: pubBase64,
+          privateKey: privBase64,
+          createdAt: serverTimestamp()
+        }
+      }, { merge: true });
+
       setRsaKeys({ publicKey: pubBase64, privateKey: privBase64 });
-
-      // Encrypt private key before storing
-      const encryptionKey = await window.crypto.subtle.generateKey(
-        { name: "AES-GCM", length: 256 },
-        true,
-        ["encrypt"]
-      );
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const encryptedPrivateKey = await window.crypto.subtle.encrypt(
-        { name: "AES-GCM", iv },
-        encryptionKey,
-        new TextEncoder().encode(privBase64)
-      );
-
-      // Store encrypted private key
-      await addDoc(collection(db, "files"), {
-        filename: "rsa_private_key",
-        method: "RSA",
-        user: auth.currentUser?.email || "anonymous",
-        timestamp: serverTimestamp(),
-        type: "key",
-        content: btoa(String.fromCharCode(...new Uint8Array(encryptedPrivateKey))),
-        iv: btoa(String.fromCharCode(...iv))
-      });
+      setCopyFeedback("RSA keys generated and saved to account!");
     } catch (error) {
       console.error('RSA Key Generation Error:', error);
       setCopyFeedback('Failed to generate RSA keys');
@@ -262,20 +277,29 @@ export default function KeygenPage() {
             </button>
             {aesKey && (
               <button
-                onClick={() => handleCopy(aesKey, "AES Key")}
-                className="px-4 bg-gray-600 hover:bg-gray-700 rounded-lg flex items-center justify-center"
+                onClick={() => saveKeyToAccount('AES', aesKey)}
+                disabled={loading.save || !auth.currentUser}
+                className="px-4 bg-green-600 hover:bg-green-700 rounded-lg flex items-center justify-center"
               >
-                <FaCopy className="w-4 h-4" />
+                <FaSave className="w-4 h-4" />
               </button>
             )}
           </div>
           {aesKey && (
-            <textarea
-              readOnly
-              value={aesKey}
-              className="mt-2 w-full p-2 bg-gray-900 rounded text-sm font-mono"
-              rows={2}
-            />
+            <div className="relative">
+              <textarea
+                readOnly
+                value={aesKey}
+                className="mt-2 w-full p-2 bg-gray-900 border border-gray-700 rounded text-sm font-mono"
+                rows={2}
+              />
+              <button
+                onClick={() => handleCopy(aesKey, "AES key")}
+                className="absolute right-2 top-2 text-gray-400 hover:text-white"
+              >
+                <FaCopy className="w-4 h-4" />
+              </button>
+            </div>
           )}
         </div>
 
@@ -287,29 +311,40 @@ export default function KeygenPage() {
           </h2>
           <button
             onClick={generateRsaKeyPair}
-            disabled={loading.rsa}
+            disabled={loading.rsa || !auth.currentUser}
             className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold transition flex items-center justify-center"
           >
-            <FaRandom className="w-4 h-4 mr-2" />
-            {loading.rsa ? "Generating..." : "Generate RSA Keys"}
+            <FaKey className="w-4 h-4 mr-2" />
+            {loading.rsa ? "Generating..." : "Generate RSA Key Pair"}
           </button>
+          {!auth.currentUser && (
+            <p className="text-yellow-500 text-sm mb-4">Please login to generate and save RSA keys</p>
+          )}
           {rsaKeys.publicKey && (
             <div className="mt-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-semibold">Public Key:</span>
                 <button
-                  onClick={() => handleCopy(rsaKeys.publicKey, "Public Key")}
+                  onClick={() => handleCopy(rsaKeys.publicKey, "Public key")}
                   className="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded flex items-center"
                 >
                   <FaCopy className="w-3 h-3" />
                 </button>
               </div>
-              <textarea
-                readOnly
-                value={rsaKeys.publicKey}
-                className="w-full p-2 bg-gray-900 rounded text-sm font-mono"
-                rows={3}
-              />
+              <div className="relative">
+                <textarea
+                  readOnly
+                  value={rsaKeys.publicKey}
+                  className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-sm font-mono"
+                  rows={3}
+                />
+                <button
+                  onClick={() => handleCopy(rsaKeys.publicKey, "Public key")}
+                  className="absolute right-2 top-2 text-gray-400 hover:text-white"
+                >
+                  <FaCopy className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
           {rsaKeys.privateKey && (
@@ -317,18 +352,26 @@ export default function KeygenPage() {
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-semibold">Private Key:</span>
                 <button
-                  onClick={() => handleCopy(rsaKeys.privateKey, "Private Key")}
+                  onClick={() => handleCopy(rsaKeys.privateKey, "Private key")}
                   className="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded flex items-center"
                 >
                   <FaCopy className="w-3 h-3" />
                 </button>
               </div>
-              <textarea
-                readOnly
-                value={rsaKeys.privateKey}
-                className="w-full p-2 bg-gray-900 rounded text-sm font-mono"
-                rows={3}
-              />
+              <div className="relative">
+                <textarea
+                  readOnly
+                  value={rsaKeys.privateKey}
+                  className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-sm font-mono"
+                  rows={3}
+                />
+                <button
+                  onClick={() => handleCopy(rsaKeys.privateKey, "Private key")}
+                  className="absolute right-2 top-2 text-gray-400 hover:text-white"
+                >
+                  <FaCopy className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>

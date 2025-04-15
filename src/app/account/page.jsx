@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { auth, db } from "@/firebase/config";
 import { updatePassword, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import { doc, getDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, deleteDoc, collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { 
   FaKey, 
   FaUserCog, 
@@ -11,7 +11,9 @@ import {
   FaCopy, 
   FaEye, 
   FaEyeSlash,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaFile,
+  FaLock
 } from "react-icons/fa";
 
 export default function AccountPage() {
@@ -21,30 +23,58 @@ export default function AccountPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [publicKey, setPublicKey] = useState("");
-  const [privateKey, setPrivateKey] = useState("");
+  const [rsaKeys, setRsaKeys] = useState({ publicKey: "", privateKey: "" });
+  const [savedKeys, setSavedKeys] = useState([]);
+  const [savedFiles, setSavedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    const fetchKeys = async () => {
+    const fetchUserData = async () => {
       if (!auth.currentUser) return;
 
       try {
+        // Fetch RSA keys
         const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
-          setPublicKey(data.publicKey || "");
-          setPrivateKey(data.privateKey || "");
+          if (data.rsaKeys) {
+            setRsaKeys({
+              publicKey: data.rsaKeys.publicKey || "",
+              privateKey: data.rsaKeys.privateKey || ""
+            });
+          }
         }
+
+        // Fetch saved keys
+        const keysQuery = query(
+          collection(db, "users", auth.currentUser.uid, "keys"),
+          orderBy("createdAt", "desc")
+        );
+        const keysSnapshot = await getDocs(keysQuery);
+        setSavedKeys(keysSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })));
+
+        // Fetch saved files
+        const filesQuery = query(
+          collection(db, "users", auth.currentUser.uid, "files"),
+          orderBy("createdAt", "desc")
+        );
+        const filesSnapshot = await getDocs(filesQuery);
+        setSavedFiles(filesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })));
       } catch (error) {
-        console.error("Error fetching keys:", error);
-        setMessage({ text: "Failed to load keys", type: "error" });
+        console.error("Error fetching user data:", error);
+        setMessage({ text: "Failed to load user data", type: "error" });
       }
     };
 
-    fetchKeys();
+    fetchUserData();
   }, []);
 
   const handleCopy = async (text, label) => {
@@ -52,8 +82,30 @@ export default function AccountPage() {
       await navigator.clipboard.writeText(text);
       setMessage({ text: `${label} copied to clipboard!`, type: "success" });
       setTimeout(() => setMessage({ text: "", type: "" }), 3000);
-    } catch (err) {
+    } catch (error) {
       setMessage({ text: "Failed to copy to clipboard", type: "error" });
+    }
+  };
+
+  const handleDeleteKey = async (keyId) => {
+    try {
+      await deleteDoc(doc(db, "users", auth.currentUser.uid, "keys", keyId));
+      setSavedKeys(keys => keys.filter(key => key.id !== keyId));
+      setMessage({ text: "Key deleted successfully", type: "success" });
+    } catch (error) {
+      console.error("Error deleting key:", error);
+      setMessage({ text: "Failed to delete key", type: "error" });
+    }
+  };
+
+  const handleDeleteFile = async (fileId) => {
+    try {
+      await deleteDoc(doc(db, "users", auth.currentUser.uid, "files", fileId));
+      setSavedFiles(files => files.filter(file => file.id !== fileId));
+      setMessage({ text: "File deleted successfully", type: "success" });
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      setMessage({ text: "Failed to delete file", type: "error" });
     }
   };
 
@@ -119,7 +171,7 @@ export default function AccountPage() {
 
   return (
     <div className="flex items-center justify-center py-12 px-6">
-      <div className="bg-[#111827] rounded-2xl shadow-xl p-10 max-w-xl w-full">
+      <div className="bg-[#111827] rounded-2xl shadow-xl p-10 max-w-4xl w-full">
         <h1 className="text-3xl font-bold mb-6 text-center text-white flex items-center justify-center">
           Account Settings <FaUserCog className="ml-3 w-8 h-8" />
         </h1>
@@ -136,59 +188,150 @@ export default function AccountPage() {
           </div>
         )}
 
-        {/* Keys Section */}
+        {/* RSA Keys Section */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-white flex items-center">
             <FaKey className="w-5 h-5 mr-2" />
-            Your Keys
+            Your RSA Keys
           </h2>
           
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Public Key</label>
-              <div className="relative">
-                <textarea
-                  readOnly
-                  value={publicKey}
-                  className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-white text-sm font-mono"
-                  rows={3}
-                />
-                {publicKey && (
+          {rsaKeys.publicKey ? (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-300 mb-2">Public Key</label>
+                <div className="relative">
+                  <textarea
+                    readOnly
+                    value={rsaKeys.publicKey}
+                    className="w-full p-2 text-sm bg-gray-900 border border-gray-700 rounded-lg text-white font-mono"
+                    rows={3}
+                  />
                   <button
-                    onClick={() => handleCopy(publicKey, "Public key")}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                    onClick={() => handleCopy(rsaKeys.publicKey, "Public key")}
+                    className="absolute right-2 top-2 text-gray-400 hover:text-white"
                   >
-                    <FaCopy />
+                    <FaCopy className="w-4 h-4" />
                   </button>
-                )}
+                </div>
               </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Private Key</label>
-              <div className="relative">
-                <textarea
-                  readOnly
-                  value={privateKey}
-                  className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-white text-sm font-mono"
-                  rows={3}
-                />
-                {privateKey && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Private Key</label>
+                <div className="relative">
+                  <textarea
+                    readOnly
+                    value={rsaKeys.privateKey}
+                    className="w-full p-2 text-sm bg-gray-900 border border-gray-700 rounded-lg text-white font-mono"
+                    rows={3}
+                  />
                   <button
-                    onClick={() => handleCopy(privateKey, "Private key")}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                    onClick={() => handleCopy(rsaKeys.privateKey, "Private key")}
+                    className="absolute right-2 top-2 text-gray-400 hover:text-white"
                   >
-                    <FaCopy />
+                    <FaCopy className="w-4 h-4" />
                   </button>
-                )}
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          ) : (
+            <p className="text-gray-400">No RSA keys generated yet. Generate them in the Key Generation page.</p>
+          )}
         </div>
 
-        {/* Change Password Section */}
+        {/* Saved Keys Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-white">Change Password</h2>
+          <h2 className="text-xl font-semibold mb-4 text-white flex items-center">
+            <FaKey className="w-5 h-5 mr-2" />
+            Saved Keys
+          </h2>
+          
+          {savedKeys.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              {savedKeys.map((key) => (
+                <div key={key.id} className="p-4 bg-gray-800 rounded-lg">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <span className="text-sm font-medium text-gray-300">{key.type} Key</span>
+                      <p className="text-xs text-gray-400">
+                        {new Date(key.createdAt?.toDate()).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleCopy(key.value, `${key.type} key`)}
+                        className="p-1 text-gray-400 hover:text-white"
+                      >
+                        <FaCopy className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteKey(key.id)}
+                        className="p-1 text-red-400 hover:text-red-500"
+                      >
+                        <FaTrash className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <textarea
+                      readOnly
+                      value={key.value}
+                      className="w-full p-2 text-xs bg-gray-900 border border-gray-700 rounded text-white font-mono"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400">No saved keys found.</p>
+          )}
+        </div>
+
+        {/* Saved Files Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-white flex items-center">
+            <FaFile className="w-5 h-5 mr-2" />
+            Saved Files
+          </h2>
+          
+          {savedFiles.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {savedFiles.map((file) => (
+                <div key={file.id} className="p-4 bg-gray-800 rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center">
+                        <FaLock className="w-4 h-4 mr-2 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-300">{file.name}</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(file.createdAt?.toDate()).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Method: {file.method} | Type: {file.type}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteFile(file.id)}
+                      className="p-1 text-red-400 hover:text-red-500"
+                    >
+                      <FaTrash className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400">No saved files found.</p>
+          )}
+        </div>
+
+        {/* Password Change Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-white flex items-center">
+            <FaLock className="w-5 h-5 mr-2" />
+            Change Password
+          </h2>
+          
           <form onSubmit={handlePasswordChange} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
@@ -258,9 +401,9 @@ export default function AccountPage() {
         </div>
 
         {/* Delete Account Section */}
-        <div>
+        <div className="border-t border-gray-700 pt-8">
           <h2 className="text-xl font-semibold mb-4 text-white flex items-center">
-            <FaTrash className="w-5 h-5 mr-2" />
+            <FaExclamationTriangle className="w-5 h-5 mr-2 text-red-500" />
             Delete Account
           </h2>
           
