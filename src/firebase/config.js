@@ -1,21 +1,19 @@
+// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
 
-
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyC_ZyvwItEuxXXtfg4fmYwH8HClQIokcpg",
-  authDomain: "crypt-webapp.firebaseapp.com",
-  projectId: "crypt-webapp",
-  storageBucket: "crypt-webapp.firebasestorage.app",
-  messagingSenderId: "983439797957",
-  appId: "1:983439797957:web:e4af071c4ba7a312d98aac",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "your-api-key",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "your-auth-domain",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "your-project-id",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "your-storage-bucket",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "your-messaging-sender-id",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "your-app-id"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
 export const auth = getAuth(app);
-export const storage = getStorage(app);
 export const db = getFirestore(app);
