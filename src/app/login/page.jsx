@@ -22,10 +22,10 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/crypt-webapp/dashboard");
+      router.push("/dashboard");
     } catch (err) {
-      setError("Failed to sign in. Please check your credentials.");
-      console.error(err);
+      console.error("Login error:", err);
+      setError(err.message || "Failed to sign in. Please check your credentials.");
     }
 
     setLoading(false);
@@ -88,7 +88,7 @@ export default function LoginPage() {
 
           <div className="text-center">
             <Link
-              href="/crypt-webapp/register"
+              href="/register"
               className="font-medium text-blue-400 hover:text-blue-500"
             >
               Don't have an account? Register here
