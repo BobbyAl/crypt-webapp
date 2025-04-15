@@ -12,24 +12,13 @@ export default function DecryptPage() {
   const [file, setFile] = useState(null);
   const [method, setMethod] = useState("aes");
   const [key, setKey] = useState("");
-  const [privateKey, setPrivateKey] = useState("");
   const [decryptedFileUrl, setDecryptedFileUrl] = useState(null);
   const [decryptedFileName, setDecryptedFileName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleDecrypt = async () => {
-    if (!file) {
-      alert("Please select a file to decrypt.");
-      return;
-    }
-    
-    if (method === "rsa" && !privateKey) {
-      alert("Please enter a private key for RSA decryption.");
-      return;
-    }
-    
-    if (method !== "rsa" && !key) {
-      alert("Please enter a decryption key.");
+    if (!file || (!key && method !== "rsa")) {
+      alert("Please select a file and enter a key (except RSA).");
       return;
     }
 
@@ -37,7 +26,7 @@ export default function DecryptPage() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("method", method);
-    formData.append("key", method === "rsa" ? privateKey : key);
+    formData.append("key", key);
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/decrypt`, {
@@ -104,22 +93,7 @@ export default function DecryptPage() {
           <option value="rsa">RSA</option>
         </select>
 
-        {method === "rsa" ? (
-          <>
-            <label className="block text-sm font-semibold mb-2 text-gray-300">
-              <div className="flex items-center">
-                <FaKey className="w-4 h-4 mr-2" />
-                Private Key
-              </div>
-            </label>
-            <textarea
-              placeholder="Paste RSA private key here"
-              value={privateKey}
-              onChange={(e) => setPrivateKey(e.target.value)}
-              className="mb-6 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white h-32 font-mono"
-            />
-          </>
-        ) : (
+        {method !== "rsa" && (
           <>
             <label className="block text-sm font-semibold mb-2 text-gray-300">
               <div className="flex items-center">
@@ -140,7 +114,7 @@ export default function DecryptPage() {
         <button
           onClick={handleDecrypt}
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center"
         >
           <FaLockOpen className="w-4 h-4 mr-2" />
           {loading ? "Decrypting..." : "Decrypt"}
