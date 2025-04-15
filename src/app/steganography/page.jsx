@@ -11,7 +11,6 @@ import {
   FaFile,
   FaCog,
   FaExchangeAlt,
-  FaHidden,
   FaSearch
 } from "react-icons/fa";
 
@@ -106,7 +105,7 @@ export default function SteganographyPage() {
     <div className="flex items-center justify-center py-12 px-6">
       <div className="bg-[#111827] rounded-2xl shadow-xl p-10 max-w-xl w-full text-white">
         <h1 className="text-3xl font-bold mb-6 text-center flex items-center justify-center">
-          Steganography <FaHidden className="ml-3 w-8 h-8" />
+          Steganography <FaEyeSlash className="ml-3 w-8 h-8" />
         </h1>
 
         {/* Operation Select */}
