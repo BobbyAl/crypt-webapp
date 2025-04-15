@@ -29,7 +29,7 @@ export default function DecryptPage() {
     formData.append("key", key);
 
     try {
-      const response = await fetch("http://localhost:5000/decrypt", {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/decrypt`, {
         method: "POST",
         body: formData,
       });

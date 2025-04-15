@@ -29,7 +29,7 @@ export default function EncryptPage() {
     formData.append("key", key);
 
     try {
-      const response = await fetch("http://localhost:5000/encrypt", {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/encrypt`, {
         method: "POST",
         body: formData,
       });

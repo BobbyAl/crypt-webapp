@@ -10,81 +10,75 @@ import {
   FaImage,
   FaFile,
   FaCog,
-  FaExchangeAlt
+  FaExchangeAlt,
+  FaHidden,
+  FaSearch
 } from "react-icons/fa";
 
 // API base URL from environment variable
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+console.log('API URL:', API_URL); // Debug log
 
 export default function SteganographyPage() {
   // State management for file handling and UI
-  const [carrierFile, setCarrierFile] = useState(null);
-  const [messageFile, setMessageFile] = useState(null);
-  const [startingBit, setStartingBit] = useState(0);
-  const [periodicity, setPeriodicity] = useState(1);
+  const [coverFile, setCoverFile] = useState(null);
+  const [secretFile, setSecretFile] = useState(null);
   const [mode, setMode] = useState("fixed");
-  const [resultFileUrl, setResultFileUrl] = useState(null);
-  const [resultFileName, setResultFileName] = useState("");
+  const [sValue, setSValue] = useState(0);
+  const [lValue, setLValue] = useState(1);
   const [operation, setOperation] = useState("embed");
+  const [capacity, setCapacity] = useState(null);
+  const [outputFileUrl, setOutputFileUrl] = useState(null);
+  const [outputFileName, setOutputFileName] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Handles embedding a message into a carrier file
-  const handleEmbed = async () => {
-    if (!carrierFile || !messageFile) {
-      alert("Please select both carrier and message files.");
+  const checkCapacity = async () => {
+    if (!coverFile) {
+      alert("Please select a cover file first.");
       return;
     }
 
     setLoading(true);
     const formData = new FormData();
-    formData.append("carrier_file", carrierFile);
-    formData.append("message_file", messageFile);
-    formData.append("S", startingBit);
-    formData.append("L", periodicity);
-    formData.append("mode", mode);
+    formData.append("file", coverFile);
+    formData.append("s", sValue);
+    formData.append("l", lValue);
 
     try {
-      const response = await fetch(`${API_URL}/steg/embed`, {
+      const response = await fetch(`${API_URL}/steg/capacity`, {
         method: "POST",
         body: formData,
       });
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      // Get filename from Content-Disposition header or create one
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `steg_${carrierFile.name}`;
-      if (contentDisposition && contentDisposition.includes('filename=')) {
-        filename = contentDisposition.split('filename=')[1].replace(/["']/g, '');
-      }
-      
-      setResultFileName(filename);
-      setResultFileUrl(url);
+      const data = await response.json();
+      setCapacity(data.capacity);
     } catch (err) {
-      console.error("Steganography error:", err);
-      alert("Failed to embed message. Please check file sizes and parameters.");
+      console.error("Capacity check error:", err);
+      alert("Error checking capacity. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handles extracting a hidden message from a carrier file
-  const handleExtract = async () => {
-    if (!carrierFile) {
-      alert("Please select a carrier file.");
+  const handleOperation = async () => {
+    if (!coverFile || (operation === "embed" && !secretFile)) {
+      alert("Please select all required files.");
       return;
     }
 
     setLoading(true);
     const formData = new FormData();
-    formData.append("carrier_file", carrierFile);
-    formData.append("S", startingBit);
-    formData.append("L", periodicity);
+    formData.append("cover_file", coverFile);
+    if (operation === "embed") {
+      formData.append("secret_file", secretFile);
+    }
+    formData.append("s", sValue);
+    formData.append("l", lValue);
     formData.append("mode", mode);
 
     try {
-      const response = await fetch(`${API_URL}/steg/extract`, {
+      const endpoint = operation === "embed" ? "/steg/embed" : "/steg/extract";
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         body: formData,
       });
@@ -92,18 +86,17 @@ export default function SteganographyPage() {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       
-      // Get filename from Content-Disposition header or create one
       const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `extracted_message.bin`;
+      let filename = operation === "embed" ? `steg_${coverFile.name}` : `extracted_${coverFile.name}`;
       if (contentDisposition && contentDisposition.includes('filename=')) {
         filename = contentDisposition.split('filename=')[1].replace(/["']/g, '');
       }
       
-      setResultFileName(filename);
-      setResultFileUrl(url);
+      setOutputFileName(filename);
+      setOutputFileUrl(url);
     } catch (err) {
-      console.error("Steganography error:", err);
-      alert("Failed to extract message. Please check parameters.");
+      console.error("Operation error:", err);
+      alert("Error performing steganography operation. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -113,121 +106,135 @@ export default function SteganographyPage() {
     <div className="flex items-center justify-center py-12 px-6">
       <div className="bg-[#111827] rounded-2xl shadow-xl p-10 max-w-xl w-full text-white">
         <h1 className="text-3xl font-bold mb-6 text-center flex items-center justify-center">
-          Steganography {operation === "embed" ? <FaEyeSlash className="ml-3 w-8 h-8" /> : <FaEye className="ml-3 w-8 h-8" />}
+          Steganography <FaHidden className="ml-3 w-8 h-8" />
         </h1>
 
-        {/* Operation mode selection */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <FaExchangeAlt className="w-5 h-5 mr-2" />
-            Operation Mode
-          </h2>
-          <select
-            value={operation}
-            onChange={(e) => setOperation(e.target.value)}
-            className="w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white"
-          >
-            <option value="embed">Embed Message</option>
-            <option value="extract">Extract Message</option>
-          </select>
-        </div>
+        {/* Operation Select */}
+        <label className="block text-sm font-semibold mb-2 text-gray-300">
+          <div className="flex items-center">
+            <FaCog className="w-4 h-4 mr-2" />
+            Operation
+          </div>
+        </label>
+        <select
+          value={operation}
+          onChange={(e) => setOperation(e.target.value)}
+          className="mb-4 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white"
+        >
+          <option value="embed">Embed Secret File</option>
+          <option value="extract">Extract Hidden File</option>
+        </select>
 
-        {/* Carrier file input section */}
-        <div className="mb-4">
-          <label className="block text-sm font-semibold mb-2 flex items-center">
+        {/* Cover File Upload */}
+        <label className="block text-sm font-semibold mb-2 text-gray-300">
+          <div className="flex items-center">
             <FaImage className="w-4 h-4 mr-2" />
-            Carrier File
-          </label>
-          <input
-            type="file"
-            onChange={(e) => setCarrierFile(e.target.files[0])}
-            className="w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white"
-          />
-        </div>
+            Cover File
+          </div>
+        </label>
+        <input
+          type="file"
+          onChange={(e) => setCoverFile(e.target.files[0])}
+          className="mb-4 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white"
+        />
 
-        {/* Message file input (only shown for embed operation) */}
+        {/* Secret File Upload (only for embed) */}
         {operation === "embed" && (
-          <div className="mb-4">
-            <label className="block text-sm font-semibold mb-2 flex items-center">
-              <FaFile className="w-4 h-4 mr-2" />
-              Message File
+          <>
+            <label className="block text-sm font-semibold mb-2 text-gray-300">
+              <div className="flex items-center">
+                <FaUpload className="w-4 h-4 mr-2" />
+                Secret File
+              </div>
             </label>
             <input
               type="file"
-              onChange={(e) => setMessageFile(e.target.files[0])}
+              onChange={(e) => setSecretFile(e.target.files[0])}
+              className="mb-4 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white"
+            />
+          </>
+        )}
+
+        {/* Mode Select */}
+        <label className="block text-sm font-semibold mb-2 text-gray-300">
+          <div className="flex items-center">
+            <FaCog className="w-4 h-4 mr-2" />
+            Mode
+          </div>
+        </label>
+        <select
+          value={mode}
+          onChange={(e) => setMode(e.target.value)}
+          className="mb-4 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white"
+        >
+          <option value="fixed">Fixed</option>
+          <option value="variable">Variable</option>
+        </select>
+
+        {/* S and L Parameters */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-gray-300">
+              S Value (Start Position)
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={sValue}
+              onChange={(e) => setSValue(parseInt(e.target.value))}
               className="w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white"
             />
           </div>
-        )}
-
-        {/* Steganography parameters configuration */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <FaCog className="w-5 h-5 mr-2" />
-            Parameters
-          </h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2">Starting Bit (S)</label>
-              <input
-                type="number"
-                min="0"
-                value={startingBit}
-                onChange={(e) => setStartingBit(parseInt(e.target.value))}
-                className="w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-2">Periodicity (L)</label>
-              <input
-                type="number"
-                min="1"
-                value={periodicity}
-                onChange={(e) => setPeriodicity(parseInt(e.target.value))}
-                className="w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white"
-              />
-            </div>
-          </div>
-          <div className="mt-4">
-            <label className="block text-sm font-semibold mb-2">Mode</label>
-            <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value)}
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-gray-300">
+              L Value (Periodicity)
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={lValue}
+              onChange={(e) => setLValue(parseInt(e.target.value))}
               className="w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-sm text-white"
-            >
-              <option value="fixed">Fixed</option>
-              <option value="variable">Variable</option>
-            </select>
+            />
           </div>
         </div>
 
-        {/* Main action button for embed/extract */}
+        {/* Check Capacity Button */}
         <button
-          onClick={operation === "embed" ? handleEmbed : handleExtract}
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center"
+          onClick={checkCapacity}
+          disabled={loading || !coverFile}
+          className="w-full mb-4 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center"
         >
-          {operation === "embed" ? (
-            <FaEyeSlash className="w-4 h-4 mr-2" />
-          ) : (
-            <FaEye className="w-4 h-4 mr-2" />
-          )}
-          {loading
-            ? "Processing..."
-            : operation === "embed"
-            ? "Embed Message"
-            : "Extract Message"}
+          <FaSearch className="w-4 h-4 mr-2" />
+          {loading ? "Checking..." : "Check Capacity"}
         </button>
 
-        {/* Download section for results */}
-        {resultFileUrl && (
+        {/* Capacity Display */}
+        {capacity !== null && (
+          <div className="mb-4 p-3 bg-gray-800 rounded-lg text-white">
+            Available Capacity: {capacity} bits ({Math.floor(capacity / 8)} bytes)
+          </div>
+        )}
+
+        {/* Operation Button */}
+        <button
+          onClick={handleOperation}
+          disabled={loading || !coverFile || (operation === "embed" && !secretFile)}
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center"
+        >
+          <FaEye className="w-4 h-4 mr-2" />
+          {loading ? "Processing..." : (operation === "embed" ? "Embed File" : "Extract File")}
+        </button>
+
+        {/* Download Output File */}
+        {outputFileUrl && (
           <a
-            href={resultFileUrl}
-            download={resultFileName}
-            className="block mt-6 text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition flex items-center justify-center"
+            href={outputFileUrl}
+            download={outputFileName}
+            className="block mt-6 text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition flex items-center justify-center"
           >
             <FaDownload className="w-4 h-4 mr-2" />
-            Download {operation === "embed" ? "Steganographic File" : "Extracted Message"}
+            Download {operation === "embed" ? "Carrier" : "Extracted"} File
           </a>
         )}
       </div>

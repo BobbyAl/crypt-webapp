@@ -24,7 +24,7 @@ export default function HashPage() {
     formData.append("file", file);
     formData.append("method", method);
 
-    const response = await fetch("http://localhost:5000/hash", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/hash`, {
       method: "POST",
       body: formData,
     });
@@ -44,8 +44,8 @@ export default function HashPage() {
     formData2.append("method", method);
 
     const [res1, res2] = await Promise.all([
-      fetch("http://localhost:5000/hash", { method: "POST", body: formData1 }),
-      fetch("http://localhost:5000/hash", { method: "POST", body: formData2 }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/hash`, { method: "POST", body: formData1 }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/hash`, { method: "POST", body: formData2 }),
     ]);
 
     const data1 = await res1.json();
