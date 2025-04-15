@@ -29,10 +29,14 @@ export default function EncryptPage() {
     formData.append("key", key);
 
     try {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/encrypt`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/encrypt`, {
         method: "POST",
         body: formData,
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -48,6 +52,7 @@ export default function EncryptPage() {
       setEncryptedFileUrl(url);
     } catch (err) {
       console.error("Encryption error:", err);
+      alert("Error encrypting file: " + err.message);
     } finally {
       setLoading(false);
     }

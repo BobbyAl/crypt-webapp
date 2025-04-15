@@ -29,10 +29,14 @@ export default function DecryptPage() {
     formData.append("key", key);
 
     try {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/decrypt`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/decrypt`, {
         method: "POST",
         body: formData,
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -48,7 +52,7 @@ export default function DecryptPage() {
       setDecryptedFileUrl(url);
     } catch (err) {
       console.error("Decryption error:", err);
-      alert("Decryption failed. Make sure you're using the correct key and method.");
+      alert("Decryption failed: " + err.message);
     } finally {
       setLoading(false);
     }

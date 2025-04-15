@@ -17,24 +17,47 @@ export default function HashPage() {
   const [secondFile, setSecondFile] = useState(null);
   const [secondHash, setSecondHash] = useState("");
   const [compareResult, setCompareResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleHash = async () => {
-    if (!file) return;
+    if (!file) {
+      alert("Please select a file to hash.");
+      return;
+    }
+
+    setLoading(true);
     const formData = new FormData();
     formData.append("file", file);
     formData.append("method", method);
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/hash`, {
-      method: "POST",
-      body: formData,
-    });
-    const data = await response.json();
-    setHashResult(data.hash);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/hash`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setHashResult(data.hash);
+      setCompareResult(null);
+    } catch (err) {
+      console.error("Hash error:", err);
+      alert("Error generating hash: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCompare = async () => {
-    if (!file || !secondFile) return;
+    if (!file || !secondFile) {
+      alert("Please select both files to compare.");
+      return;
+    }
 
+    setLoading(true);
     const formData1 = new FormData();
     formData1.append("file", file);
     formData1.append("method", method);
@@ -43,17 +66,34 @@ export default function HashPage() {
     formData2.append("file", secondFile);
     formData2.append("method", method);
 
-    const [res1, res2] = await Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/hash`, { method: "POST", body: formData1 }),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/hash`, { method: "POST", body: formData2 }),
-    ]);
+    try {
+      const [res1, res2] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/hash`, { 
+          method: "POST", 
+          body: formData1 
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/hash`, { 
+          method: "POST", 
+          body: formData2 
+        }),
+      ]);
 
-    const data1 = await res1.json();
-    const data2 = await res2.json();
+      if (!res1.ok || !res2.ok) {
+        throw new Error(`HTTP error! status: ${!res1.ok ? res1.status : res2.status}`);
+      }
 
-    setHashResult(data1.hash);
-    setSecondHash(data2.hash);
-    setCompareResult(data1.hash === data2.hash);
+      const data1 = await res1.json();
+      const data2 = await res2.json();
+
+      setHashResult(data1.hash);
+      setSecondHash(data2.hash);
+      setCompareResult(data1.hash === data2.hash);
+    } catch (err) {
+      console.error("Compare error:", err);
+      alert("Error comparing hashes: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,10 +131,11 @@ export default function HashPage() {
         />
         <button
           onClick={handleHash}
-          className="mb-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg flex items-center justify-center"
+          disabled={loading}
+          className="mb-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <FaHashtag className="w-4 h-4 mr-2" />
-          Generate Hash
+          {loading ? "Generating..." : "Generate Hash"}
         </button>
 
         <label className="block text-sm font-semibold mb-2 text-gray-300">
@@ -107,13 +148,15 @@ export default function HashPage() {
           type="file"
           onChange={(e) => setSecondFile(e.target.files[0])}
           className="mb-4 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm"
+          disabled={loading}
         />
         <button
           onClick={handleCompare}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg flex items-center justify-center"
+          disabled={loading}
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <FaEquals className="w-4 h-4 mr-2" />
-          Compare File Hashes
+          {loading ? "Comparing..." : "Compare File Hashes"}
         </button>
 
         {/* Display single hash result */}
