@@ -13,8 +13,8 @@ export default function Home() {
               <span className="text-blue-500"> with Confidence</span>
             </h1>
             <p className="text-xl text-gray-400 max-w-2xl">
-              Advanced encryption tools for your sensitive information. 
-              Military-grade security made simple and accessible.
+              Advanced (not really) encryption tools for your sensitive information. 
+              Military-grade (def not) security made simple and accessible.
             </p>
           </div>
           
@@ -45,7 +45,7 @@ export default function Home() {
               <div className="text-gray-400">RSA Keys</div>
             </div>
             <div className="text-center lg:text-left">
-              <div className="text-blue-500 font-bold text-2xl">100%</div>
+              <div className="text-blue-500 font-bold text-2xl">100% (sure pal)</div>
               <div className="text-gray-400">Secure</div>
             </div>
           </div>
