@@ -38,7 +38,7 @@ export default function SteganographyPage() {
 
     setLoading(true);
     const formData = new FormData();
-    formData.append("file", coverFile);
+    formData.append("cover_file", coverFile);
     formData.append("s", sValue);
     formData.append("l", lValue);
 
@@ -66,9 +66,11 @@ export default function SteganographyPage() {
 
     setLoading(true);
     const formData = new FormData();
-    formData.append("cover_file", coverFile);
     if (operation === "embed") {
+      formData.append("cover_file", coverFile);
       formData.append("secret_file", secretFile);
+    } else {
+      formData.append("carrier_file", coverFile);
     }
     formData.append("s", sValue);
     formData.append("l", lValue);
