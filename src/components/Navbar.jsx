@@ -34,7 +34,7 @@ export default function Navbar() {
         <div className="flex justify-between h-20">
           {/* Left - Logo */}
           <div className="flex items-center">
-            <Link href="/crypt-webapp/dashboard" className="flex items-center text-white font-bold text-xl">
+            <Link href="/dashboard" className="flex items-center text-white font-bold text-xl">
               <FaShieldAlt className="w-6 h-6 mr-2" />
               Crypt
             </Link>
@@ -43,7 +43,7 @@ export default function Navbar() {
           {/* Center - Dashboard & Modes */}
           <div className="hidden md:flex items-center space-x-8">
             <Link
-              href="/crypt-webapp/dashboard"
+              href="/dashboard"
               className={`inline-flex items-center px-1 pt-1 text-base font-medium ${
                 isActive('/dashboard')
                   ? 'text-blue-400 border-b-2 border-blue-400'
@@ -71,35 +71,35 @@ export default function Navbar() {
                 <div className="absolute z-50 top-full mt-1 w-48 rounded-md shadow-lg bg-[#1F2937] ring-1 ring-black ring-opacity-5">
                   <div className="py-1" role="menu">
                     <Link
-                      href="/crypt-webapp/encrypt"
+                      href="/encrypt"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                       onClick={() => setIsModesOpen(false)}
                     >
                       Encrypt
                     </Link>
                     <Link
-                      href="/crypt-webapp/decrypt"
+                      href="/decrypt"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                       onClick={() => setIsModesOpen(false)}
                     >
                       Decrypt
                     </Link>
                     <Link
-                      href="/crypt-webapp/hash"
+                      href="/hash"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                       onClick={() => setIsModesOpen(false)}
                     >
                       Hash
                     </Link>
                     <Link
-                      href="/crypt-webapp/keygen"
+                      href="/keygen"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                       onClick={() => setIsModesOpen(false)}
                     >
                       Key Generation
                     </Link>
                     <Link
-                      href="/crypt-webapp/steganography"
+                      href="/steganography"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                       onClick={() => setIsModesOpen(false)}
                     >
@@ -114,7 +114,7 @@ export default function Navbar() {
           {/* Right - Account */}
           <div className="hidden md:flex items-center">
             <Link
-              href={isAuthenticated ? "/crypt-webapp/account" : "/crypt-webapp/login"}
+              href={isAuthenticated ? "/account" : "/login"}
               onClick={handleAccountClick}
               className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
                 isActive('/account')
