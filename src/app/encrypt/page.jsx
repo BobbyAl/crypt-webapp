@@ -36,6 +36,15 @@ export default function EncryptPage() {
       return;
     }
 
+    // Check key length for 3DES
+    if (method === "3des" && key.length < 16) {
+      setMessage({ 
+        text: `3DES key must be at least 16 characters long. Your key is ${key.length} characters.`, 
+        type: "error" 
+      });
+      return;
+    }
+
     setLoading(true);
     const formData = new FormData();
     formData.append("file", file);
@@ -196,13 +205,20 @@ export default function EncryptPage() {
                 className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm h-32 font-mono focus:ring-blue-500 focus:border-blue-500"
               />
             ) : (
-              <input
-                type="text"
-                placeholder="Enter key"
-                value={key}
-                onChange={(e) => setKey(e.target.value)}
-                className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
-              />
+              <>
+                <input
+                  type="text"
+                  placeholder={method === "3des" ? "Enter key (minimum 16 characters)" : "Enter key"}
+                  value={key}
+                  onChange={(e) => setKey(e.target.value)}
+                  className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+                {method === "3des" && (
+                  <p className="mt-1 text-sm text-gray-400">
+                    Key must be at least 16 characters long
+                  </p>
+                )}
+              </>
             )}
           </div>
 
