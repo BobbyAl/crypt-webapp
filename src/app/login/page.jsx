@@ -34,7 +34,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
-        {/* Back Button */}
+        {/* back */}
         <Link
           href="/"
           className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-8"
