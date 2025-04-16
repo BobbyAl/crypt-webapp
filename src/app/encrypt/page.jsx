@@ -1,3 +1,11 @@
+/**
+ * cryptographic libraries
+ * - web crypto api - https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API
+ * - PyCrypto: https://www.dlitz.net/software/pycrypto/api/2.6/
+ * - cryptography.io: https://cryptography.io/en/latest/
+ * - pycryptodome: https://pycryptodome.readthedocs.io/en/latest/
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -19,7 +27,7 @@ export default function EncryptPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
-  const RSA_MAX_SIZE = 190; // Maximum size in bytes for RSA-2048 with OAEP padding
+  const RSA_MAX_SIZE = 190; // the max size in bytes for RSA-2048 with OAEP padding
 
   const handleEncrypt = async () => {
     if (!file || (!key && method !== "rsa")) {
@@ -27,7 +35,7 @@ export default function EncryptPage() {
       return;
     }
 
-    // Check file size for RSA
+    // check file size for RSA
     if (method === "rsa" && file.size > RSA_MAX_SIZE) {
       setMessage({ 
         text: `RSA encryption is limited to files smaller than ${RSA_MAX_SIZE} bytes. Your file is ${file.size} bytes. Please use AES or 3DES for larger files.`,
@@ -36,7 +44,7 @@ export default function EncryptPage() {
       return;
     }
 
-    // Check key length for 3DES
+    // check key length for 3DES
     if (method === "3des" && key.length < 16) {
       setMessage({ 
         text: `3DES key must be at least 16 characters long. Your key is ${key.length} characters.`, 
@@ -51,7 +59,7 @@ export default function EncryptPage() {
     formData.append("method", method);
     formData.append("key", key);
 
-    // Add AES-specific parameters
+    // add AES params
     if (method === "aes") {
       formData.append("key_size", parseInt(aesKeySize));
       formData.append("block_mode", aesMode);
@@ -70,7 +78,6 @@ export default function EncryptPage() {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       
-      // Get filename from Content-Disposition header or create one from original
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = `encrypted_${file.name}`;
       if (contentDisposition && contentDisposition.includes('filename=')) {

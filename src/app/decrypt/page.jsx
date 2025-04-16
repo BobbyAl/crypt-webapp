@@ -1,3 +1,11 @@
+/**
+ * cryptographic libraries
+ * - web crypto api - https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API
+ * - PyCrypto: https://www.dlitz.net/software/pycrypto/api/2.6/
+ * - cryptography.io: https://cryptography.io/en/latest/
+ * - pycryptodome: https://pycryptodome.readthedocs.io/en/latest/
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -31,7 +39,7 @@ export default function DecryptPage() {
     formData.append("method", method);
     formData.append("key", key);
 
-    // Add AES-specific parameters
+    // add AES-specific params
     if (method === "aes") {
       formData.append("key_size", parseInt(aesKeySize));
       formData.append("block_mode", aesMode);
@@ -50,7 +58,6 @@ export default function DecryptPage() {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       
-      // Get filename from Content-Disposition header or derive from original
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = file.name.replace('encrypted_', '');
       if (contentDisposition && contentDisposition.includes('filename=')) {

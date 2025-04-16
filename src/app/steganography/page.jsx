@@ -14,12 +14,11 @@ import {
   FaSearch
 } from "react-icons/fa";
 
-// API base URL from environment variable
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 console.log('API URL:', API_URL); // Debug log
 
 export default function SteganographyPage() {
-  // State management for file handling and UI
+
   const [coverFile, setCoverFile] = useState(null);
   const [secretFile, setSecretFile] = useState(null);
   const [mode, setMode] = useState("fixed");
@@ -114,7 +113,7 @@ export default function SteganographyPage() {
         </div>
 
         <div className="space-y-6">
-          {/* Operation Select */}
+          {/* operation select */}
           <div>
             <label className="block text-sm font-medium text-gray-300">
               <div className="flex items-center">
@@ -132,7 +131,7 @@ export default function SteganographyPage() {
             </select>
           </div>
 
-          {/* Cover File Upload */}
+          {/* cover file upload */}
           <div>
             <label className="block text-sm font-medium text-gray-300">
               <div className="flex items-center">
@@ -147,7 +146,7 @@ export default function SteganographyPage() {
             />
           </div>
 
-          {/* Secret File Upload (only for embed) */}
+          {/* secret file upload (only for embed) */}
           {operation === "embed" && (
             <div>
               <label className="block text-sm font-medium text-gray-300">
@@ -164,7 +163,7 @@ export default function SteganographyPage() {
             </div>
           )}
 
-          {/* Mode Select */}
+          {/* mode select */}
           <div>
             <label className="block text-sm font-medium text-gray-300">
               <div className="flex items-center">
@@ -182,7 +181,7 @@ export default function SteganographyPage() {
             </select>
           </div>
 
-          {/* S and L Parameters */}
+          {/* S and L params */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300">
@@ -210,7 +209,7 @@ export default function SteganographyPage() {
             </div>
           </div>
 
-          {/* Check Capacity Button */}
+          {/* check cap cutton */}
           <button
             onClick={checkCapacity}
             disabled={loading || !coverFile}
@@ -220,14 +219,14 @@ export default function SteganographyPage() {
             {loading ? "Checking..." : "Check Capacity"}
           </button>
 
-          {/* Capacity Display */}
+          {/* cap display */}
           {capacity !== null && (
             <div className="p-4 rounded-md bg-gray-900/50 text-gray-300">
               Available Capacity: {capacity} bits ({Math.floor(capacity / 8)} bytes)
             </div>
           )}
 
-          {/* Operation Button */}
+          {/* operation button */}
           <button
             onClick={handleOperation}
             disabled={loading || !coverFile || (operation === "embed" && !secretFile)}
@@ -237,7 +236,7 @@ export default function SteganographyPage() {
             {loading ? "Processing..." : (operation === "embed" ? "Embed File" : "Extract File")}
           </button>
 
-          {/* Download Output File */}
+          {/* download output file */}
           {outputFileUrl && (
             <a
               href={outputFileUrl}

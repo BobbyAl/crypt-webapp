@@ -1,3 +1,8 @@
+/**
+ * cryptographic libraries
+ * - hashlib (Python standard library) - https://docs.python.org/3/library/hashlib.html
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -173,7 +178,7 @@ export default function HashPage() {
             {loading ? "Comparing..." : "Compare File Hashes"}
           </button>
 
-          {/* Display single hash result */}
+          {/* display single hash result */}
           {hashResult && compareResult === null && (
             <div className="p-4 rounded-md bg-gray-900/50">
               <div className="flex items-center text-sm text-gray-300 break-all font-mono">

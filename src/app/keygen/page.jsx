@@ -1,3 +1,13 @@
+/**
+ * cryptographic libraries
+ * - web crypto api - https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API
+ *   - generateKey: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey
+ *   - deriveKey: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey
+ *   - exportKey: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/exportKey
+ * - ECDH (P-256): https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey#ecdh
+ * - RSA-OAEP: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey#rsa-oaep
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -155,10 +165,10 @@ export default function KeygenPage() {
       
       let otherPublicKey;
       if (dhState.otherKeyPair) {
-        // If we generated the other party's key, use it directly
+        // if we generated the other party's key, use it directly
         otherPublicKey = dhState.otherKeyPair.publicKey;
       } else {
-        // Convert base64 public key back to CryptoKey
+        // convert base64 public key back to CryptoKey
         const binaryStr = atob(dhState.otherPublicKey);
         const bytes = new Uint8Array(binaryStr.length);
         for (let i = 0; i < binaryStr.length; i++) {
@@ -175,7 +185,7 @@ export default function KeygenPage() {
         );
       }
 
-      // Derive shared secret
+      // deirve shared secret
       const sharedKey = await crypto.subtle.deriveKey(
         { name: "ECDH", public: otherPublicKey },
         dhState.myKeyPair.privateKey,
@@ -216,18 +226,18 @@ export default function KeygenPage() {
       if (includeSymbols) charset += symbols;
       
       let password = '';
-      // Ensure at least one character from each selected type
+      // at least one character from each selected type
       if (includeUppercase) password += uppercase[Math.floor(Math.random() * uppercase.length)];
       password += lowercase[Math.floor(Math.random() * lowercase.length)];
       if (includeNumbers) password += numbers[Math.floor(Math.random() * numbers.length)];
       if (includeSymbols) password += symbols[Math.floor(Math.random() * symbols.length)];
       
-      // Fill the rest randomly
+      // fill the rest randomly
       while (password.length < length) {
         password += charset[Math.floor(Math.random() * charset.length)];
       }
       
-      // Shuffle the password
+      // shuffle the password
       password = password.split('').sort(() => Math.random() - 0.5).join('');
       
       setPassword(password);
@@ -287,7 +297,7 @@ export default function KeygenPage() {
         )}
 
         <div className="space-y-6">
-          {/* AES Key Generation */}
+          {/* AES key gen */}
           <div className="space-y-4 p-4 rounded-md bg-gray-900/50">
             <h3 className="text-xl font-semibold text-white flex items-center">
               <FaLock className="w-5 h-5 mr-2" />
@@ -323,7 +333,7 @@ export default function KeygenPage() {
             )}
           </div>
 
-          {/* RSA Key Generation */}
+          {/* RSA key gen */}
           <div className="space-y-4 p-4 rounded-md bg-gray-900/50">
             <h3 className="text-xl font-semibold text-white flex items-center">
               <FaKey className="w-5 h-5 mr-2" />
@@ -374,7 +384,7 @@ export default function KeygenPage() {
             )}
           </div>
 
-          {/* DH Key Exchange */}
+          {/* DH key exchange */}
           <div className="space-y-4 p-4 rounded-md bg-gray-900/50">
             <h3 className="text-xl font-semibold text-white flex items-center">
               <FaExchangeAlt className="w-5 h-5 mr-2" />
@@ -463,7 +473,7 @@ export default function KeygenPage() {
             </div>
           </div>
 
-          {/* Password Generation */}
+          {/* password gen */}
           <div className="space-y-4 p-4 rounded-md bg-gray-900/50">
             <h3 className="text-xl font-semibold text-white flex items-center">
               <FaAsterisk className="w-5 h-5 mr-2" />
