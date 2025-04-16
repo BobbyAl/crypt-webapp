@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaChevronDown, FaUser, FaTachometerAlt, FaLock, FaShieldAlt } from 'react-icons/fa';
+import { FaChevronDown, FaUser, FaTachometerAlt, FaLock, FaShieldAlt, FaChevronUp } from 'react-icons/fa';
 
 export default function Navbar() {
   const [isModesOpen, setIsModesOpen] = useState(false);
@@ -27,7 +27,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-8">
             <Link
               href="/dashboard"
-              className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
+              className={`inline-flex items-center px-1 pt-1 text-base font-medium ${
                 isActive('/dashboard')
                   ? 'text-blue-400 border-b-2 border-blue-400'
                   : 'text-gray-300 hover:text-white'
@@ -38,16 +38,19 @@ export default function Navbar() {
             </Link>
 
             {/* Modes Dropdown */}
-            <div className="relative flex items-center">
+            <div 
+              className="relative flex items-center"
+              onMouseEnter={() => setIsModesOpen(true)}
+              onMouseLeave={() => setIsModesOpen(false)}
+            >
               <button
-                onClick={() => setIsModesOpen(!isModesOpen)}
-                className={`inline-flex items-center px-1 text-sm font-medium ${
+                className={`inline-flex items-center px-1 text-base font-medium ${
                   isModesOpen ? 'text-blue-400' : 'text-gray-300 hover:text-white'
                 }`}
               >
                 <FaLock className="mr-2" />
                 Modes
-                <FaChevronDown className="ml-2" />
+                {isModesOpen ? <FaChevronUp className="ml-2" /> : <FaChevronDown className="ml-2" />}
               </button>
 
               {isModesOpen && (
