@@ -14,31 +14,37 @@ import {
   FaSearch
 } from "react-icons/fa";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-console.log('API URL:', API_URL); // Debug log
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function SteganographyPage() {
+  // Common state
+  const [operation, setOperation] = useState("embed");
+  const [loading, setLoading] = useState(false);
+  const [outputFileUrl, setOutputFileUrl] = useState(null);
+  const [outputFileName, setOutputFileName] = useState("");
 
-  const [coverFile, setCoverFile] = useState(null);
+  // Embed-specific state
+  const [coverFileEmbed, setCoverFileEmbed] = useState(null);
   const [secretFile, setSecretFile] = useState(null);
+  const [embedCapacity, setEmbedCapacity] = useState(null);
+
+  // Extract-specific state
+  const [carrierFile, setCarrierFile] = useState(null);
+
+  // Steganography parameters
   const [mode, setMode] = useState("fixed");
   const [sValue, setSValue] = useState(0);
   const [lValue, setLValue] = useState(1);
-  const [operation, setOperation] = useState("embed");
-  const [capacity, setCapacity] = useState(null);
-  const [outputFileUrl, setOutputFileUrl] = useState(null);
-  const [outputFileName, setOutputFileName] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const checkCapacity = async () => {
-    if (!coverFile) {
+    if (!coverFileEmbed) {
       alert("Please select a cover file first.");
       return;
     }
 
     setLoading(true);
     const formData = new FormData();
-    formData.append("cover_file", coverFile);
+    formData.append("cover_file", coverFileEmbed);
     formData.append("s", sValue);
     formData.append("l", lValue);
 
@@ -49,7 +55,7 @@ export default function SteganographyPage() {
       });
 
       const data = await response.json();
-      setCapacity(data.capacity);
+      setEmbedCapacity(data.capacity);
     } catch (err) {
       console.error("Capacity check error:", err);
       alert("Error checking capacity. Please try again.");
@@ -58,27 +64,22 @@ export default function SteganographyPage() {
     }
   };
 
-  const handleOperation = async () => {
-    if (!coverFile || (operation === "embed" && !secretFile)) {
-      alert("Please select all required files.");
+  const handleEmbed = async () => {
+    if (!coverFileEmbed || !secretFile) {
+      alert("Please select both cover and secret files.");
       return;
     }
 
     setLoading(true);
     const formData = new FormData();
-    if (operation === "embed") {
-      formData.append("cover_file", coverFile);
-      formData.append("secret_file", secretFile);
-    } else {
-      formData.append("carrier_file", coverFile);
-    }
+    formData.append("cover_file", coverFileEmbed);
+    formData.append("secret_file", secretFile);
     formData.append("s", sValue);
     formData.append("l", lValue);
     formData.append("mode", mode);
 
     try {
-      const endpoint = operation === "embed" ? "/steg/embed" : "/steg/extract";
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const response = await fetch(`${API_URL}/steg/embed`, {
         method: "POST",
         body: formData,
       });
@@ -87,7 +88,7 @@ export default function SteganographyPage() {
       const url = window.URL.createObjectURL(blob);
       
       const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = operation === "embed" ? `steg_${coverFile.name}` : `extracted_${coverFile.name}`;
+      let filename = `steg_${coverFileEmbed.name}`;
       if (contentDisposition && contentDisposition.includes('filename=')) {
         filename = contentDisposition.split('filename=')[1].replace(/["']/g, '');
       }
@@ -95,12 +96,135 @@ export default function SteganographyPage() {
       setOutputFileName(filename);
       setOutputFileUrl(url);
     } catch (err) {
-      console.error("Operation error:", err);
-      alert("Error performing steganography operation. Please try again.");
+      console.error("Embed error:", err);
+      alert("Error embedding file. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  const handleExtract = async () => {
+    if (!carrierFile) {
+      alert("Please select a carrier file.");
+      return;
+    }
+
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("carrier_file", carrierFile);
+    formData.append("s", sValue);
+    formData.append("l", lValue);
+    formData.append("mode", mode);
+
+    try {
+      const response = await fetch(`${API_URL}/steg/extract`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `extracted_${carrierFile.name}`;
+      if (contentDisposition && contentDisposition.includes('filename=')) {
+        filename = contentDisposition.split('filename=')[1].replace(/["']/g, '');
+      }
+      
+      setOutputFileName(filename);
+      setOutputFileUrl(url);
+    } catch (err) {
+      console.error("Extract error:", err);
+      alert("Error extracting file. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderEmbedSection = () => (
+    <div className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-300">
+          <div className="flex items-center">
+            <FaImage className="w-4 h-4 mr-2" />
+            Cover File (Image)
+          </div>
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setCoverFileEmbed(e.target.files[0])}
+          className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300">
+          <div className="flex items-center">
+            <FaFile className="w-4 h-4 mr-2" />
+            Secret File
+          </div>
+        </label>
+        <input
+          type="file"
+          onChange={(e) => setSecretFile(e.target.files[0])}
+          className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <button
+        onClick={checkCapacity}
+        disabled={loading || !coverFileEmbed}
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+      >
+        <FaSearch className="w-4 h-4 mr-2" />
+        {loading ? "Checking..." : "Check Capacity"}
+      </button>
+
+      {embedCapacity !== null && (
+        <div className="p-4 rounded-md bg-gray-900/50 text-gray-300">
+          Available Capacity: {embedCapacity} bits ({Math.floor(embedCapacity / 8)} bytes)
+        </div>
+      )}
+
+      <button
+        onClick={handleEmbed}
+        disabled={loading || !coverFileEmbed || !secretFile}
+        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+      >
+        <FaEye className="w-4 h-4 mr-2" />
+        {loading ? "Embedding..." : "Embed File"}
+      </button>
+    </div>
+  );
+
+  const renderExtractSection = () => (
+    <div className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-300">
+          <div className="flex items-center">
+            <FaImage className="w-4 h-4 mr-2" />
+            Carrier File (Image with hidden data)
+          </div>
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setCarrierFile(e.target.files[0])}
+          className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <button
+        onClick={handleExtract}
+        disabled={loading || !carrierFile}
+        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+      >
+        <FaEyeSlash className="w-4 h-4 mr-2" />
+        {loading ? "Extracting..." : "Extract Hidden File"}
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -115,7 +239,6 @@ export default function SteganographyPage() {
         </div>
 
         <div className="space-y-6">
-          {/* operation select */}
           <div>
             <label className="block text-sm font-medium text-gray-300">
               <div className="flex items-center">
@@ -125,7 +248,12 @@ export default function SteganographyPage() {
             </label>
             <select
               value={operation}
-              onChange={(e) => setOperation(e.target.value)}
+              onChange={(e) => {
+                setOperation(e.target.value);
+                setOutputFileUrl(null);
+                setOutputFileName("");
+                setEmbedCapacity(null);
+              }}
               className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="embed">Embed Secret File</option>
@@ -133,39 +261,6 @@ export default function SteganographyPage() {
             </select>
           </div>
 
-          {/* cover file upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300">
-              <div className="flex items-center">
-                <FaImage className="w-4 h-4 mr-2" />
-                Cover File
-              </div>
-            </label>
-            <input
-              type="file"
-              onChange={(e) => setCoverFile(e.target.files[0])}
-              className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          {/* secret file upload (only for embed) */}
-          {operation === "embed" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-300">
-                <div className="flex items-center">
-                  <FaUpload className="w-4 h-4 mr-2" />
-                  Secret File
-                </div>
-              </label>
-              <input
-                type="file"
-                onChange={(e) => setSecretFile(e.target.files[0])}
-                className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          )}
-
-          {/* mode select */}
           <div>
             <label className="block text-sm font-medium text-gray-300">
               <div className="flex items-center">
@@ -183,7 +278,6 @@ export default function SteganographyPage() {
             </select>
           </div>
 
-          {/* S and L params */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300">
@@ -211,34 +305,8 @@ export default function SteganographyPage() {
             </div>
           </div>
 
-          {/* check cap cutton */}
-          <button
-            onClick={checkCapacity}
-            disabled={loading || !coverFile}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
-          >
-            <FaSearch className="w-4 h-4 mr-2" />
-            {loading ? "Checking..." : "Check Capacity"}
-          </button>
+          {operation === "embed" ? renderEmbedSection() : renderExtractSection()}
 
-          {/* cap display */}
-          {capacity !== null && (
-            <div className="p-4 rounded-md bg-gray-900/50 text-gray-300">
-              Available Capacity: {capacity} bits ({Math.floor(capacity / 8)} bytes)
-            </div>
-          )}
-
-          {/* operation button */}
-          <button
-            onClick={handleOperation}
-            disabled={loading || !coverFile || (operation === "embed" && !secretFile)}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
-          >
-            <FaEye className="w-4 h-4 mr-2" />
-            {loading ? "Processing..." : (operation === "embed" ? "Embed File" : "Extract File")}
-          </button>
-
-          {/* download output file */}
           {outputFileUrl && (
             <a
               href={outputFileUrl}
