@@ -12,7 +12,7 @@ export default function Navbar() {
   const isActive = (path) => pathname === path;
 
   return (
-    <nav className="bg-[#111827]/90 border-b border-white/10 backdrop-blur-sm">
+    <nav className="bg-[#111827]/90 border-b border-white/10 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-20">
           {/* Left - Logo */}
@@ -51,7 +51,7 @@ export default function Navbar() {
               </button>
 
               {isModesOpen && (
-                <div className="absolute z-10 top-full mt-1 w-48 rounded-md shadow-lg bg-[#1F2937] ring-1 ring-black ring-opacity-5">
+                <div className="absolute z-50 top-full mt-1 w-48 rounded-md shadow-lg bg-[#1F2937] ring-1 ring-black ring-opacity-5">
                   <div className="py-1" role="menu">
                     <Link
                       href="/encrypt"
