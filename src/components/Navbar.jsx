@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaChevronDown, FaUser, FaTachometerAlt, FaLock, FaShieldAlt, FaChevronUp } from 'react-icons/fa';
+import { FaChevronDown, FaUser, FaTachometerAlt, FaLock, FaShieldAlt } from 'react-icons/fa';
 
 export default function Navbar() {
   const [isModesOpen, setIsModesOpen] = useState(false);
@@ -38,59 +38,59 @@ export default function Navbar() {
             </Link>
 
             {/* Modes Dropdown */}
-            <div 
-              className="relative flex items-center"
-              onMouseEnter={() => setIsModesOpen(true)}
-              onMouseLeave={() => setIsModesOpen(false)}
-            >
+            <div className="relative flex items-center">
               <button
+                onClick={() => setIsModesOpen(!isModesOpen)}
                 className={`inline-flex items-center px-1 text-base font-medium ${
                   isModesOpen ? 'text-blue-400' : 'text-gray-300 hover:text-white'
                 }`}
               >
                 <FaLock className="mr-2" />
                 Modes
-                {isModesOpen ? <FaChevronUp className="ml-2" /> : <FaChevronDown className="ml-2" />}
+                <FaChevronDown className="ml-2" />
               </button>
 
-              <div 
-                className={`absolute z-10 top-full left-0 mt-2 w-48 rounded-md shadow-xl bg-[#1F2937]/95 backdrop-blur-sm border border-gray-700 transform transition-all duration-200 origin-top ${
-                  isModesOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-                }`}
-              >
-                <div className="py-2" role="menu">
-                  <Link
-                    href="/encrypt"
-                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
-                  >
-                    Encrypt
-                  </Link>
-                  <Link
-                    href="/decrypt"
-                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
-                  >
-                    Decrypt
-                  </Link>
-                  <Link
-                    href="/hash"
-                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
-                  >
-                    Hash
-                  </Link>
-                  <Link
-                    href="/keygen"
-                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
-                  >
-                    Key Generation
-                  </Link>
-                  <Link
-                    href="/steganography"
-                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
-                  >
-                    Steganography
-                  </Link>
+              {isModesOpen && (
+                <div className="absolute z-10 top-full mt-1 w-48 rounded-md shadow-lg bg-[#1F2937] ring-1 ring-black ring-opacity-5">
+                  <div className="py-1" role="menu">
+                    <Link
+                      href="/encrypt"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                      onClick={() => setIsModesOpen(false)}
+                    >
+                      Encrypt
+                    </Link>
+                    <Link
+                      href="/decrypt"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                      onClick={() => setIsModesOpen(false)}
+                    >
+                      Decrypt
+                    </Link>
+                    <Link
+                      href="/hash"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                      onClick={() => setIsModesOpen(false)}
+                    >
+                      Hash
+                    </Link>
+                    <Link
+                      href="/keygen"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                      onClick={() => setIsModesOpen(false)}
+                    >
+                      Key Generation
+                    </Link>
+                    <Link
+                      href="/steganography"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                      onClick={() => setIsModesOpen(false)}
+                    >
+                      Steganography
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
