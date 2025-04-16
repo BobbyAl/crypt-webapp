@@ -23,57 +23,25 @@ export default function SteganographyPage() {
   const [outputFileUrl, setOutputFileUrl] = useState(null);
   const [outputFileName, setOutputFileName] = useState("");
 
-  // Embed-specific state
-  const [coverFileEmbed, setCoverFileEmbed] = useState(null);
-  const [secretFile, setSecretFile] = useState(null);
-  const [embedCapacity, setEmbedCapacity] = useState(null);
-
-  // Extract-specific state
+  // Files
   const [carrierFile, setCarrierFile] = useState(null);
+  const [messageFile, setMessageFile] = useState(null);
 
   // Steganography parameters
   const [mode, setMode] = useState("fixed");
   const [sValue, setSValue] = useState(0);
   const [lValue, setLValue] = useState(1);
 
-  const checkCapacity = async () => {
-    if (!coverFileEmbed) {
-      alert("Please select a cover file first.");
-      return;
-    }
-
-    setLoading(true);
-    const formData = new FormData();
-    formData.append("cover_file", coverFileEmbed);
-    formData.append("s", sValue);
-    formData.append("l", lValue);
-
-    try {
-      const response = await fetch(`${API_URL}/steg/capacity`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      setEmbedCapacity(data.capacity);
-    } catch (err) {
-      console.error("Capacity check error:", err);
-      alert("Error checking capacity. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleEmbed = async () => {
-    if (!coverFileEmbed || !secretFile) {
-      alert("Please select both cover and secret files.");
+    if (!carrierFile || !messageFile) {
+      alert("Please select both carrier and message files.");
       return;
     }
 
     setLoading(true);
     const formData = new FormData();
-    formData.append("cover_file", coverFileEmbed);
-    formData.append("secret_file", secretFile);
+    formData.append("cover_file", carrierFile);
+    formData.append("secret_file", messageFile);
     formData.append("s", sValue);
     formData.append("l", lValue);
     formData.append("mode", mode);
@@ -84,20 +52,22 @@ export default function SteganographyPage() {
         body: formData,
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `steg_${coverFileEmbed.name}`;
-      if (contentDisposition && contentDisposition.includes('filename=')) {
-        filename = contentDisposition.split('filename=')[1].replace(/["']/g, '');
-      }
+      // Keep the original carrier file extension
+      const extension = carrierFile.name.split('.').pop();
+      const filename = `modified_${carrierFile.name}`;
       
       setOutputFileName(filename);
       setOutputFileUrl(url);
     } catch (err) {
       console.error("Embed error:", err);
-      alert("Error embedding file. Please try again.");
+      alert("Error embedding message: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -105,7 +75,7 @@ export default function SteganographyPage() {
 
   const handleExtract = async () => {
     if (!carrierFile) {
-      alert("Please select a carrier file.");
+      alert("Please select the carrier file containing the hidden message.");
       return;
     }
 
@@ -122,20 +92,18 @@ export default function SteganographyPage() {
         body: formData,
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `extracted_${carrierFile.name}`;
-      if (contentDisposition && contentDisposition.includes('filename=')) {
-        filename = contentDisposition.split('filename=')[1].replace(/["']/g, '');
-      }
-      
-      setOutputFileName(filename);
+      setOutputFileName("extracted_message.txt");
       setOutputFileUrl(url);
     } catch (err) {
       console.error("Extract error:", err);
-      alert("Error extracting file. Please try again.");
+      alert("Error extracting message: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -147,49 +115,40 @@ export default function SteganographyPage() {
         <label className="block text-sm font-medium text-gray-300">
           <div className="flex items-center">
             <FaImage className="w-4 h-4 mr-2" />
-            Cover File (Image)
+            Carrier Image File (BMP recommended)
           </div>
         </label>
         <input
           type="file"
           accept="image/*"
-          onChange={(e) => setCoverFileEmbed(e.target.files[0])}
+          onChange={(e) => setCarrierFile(e.target.files[0])}
           className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
         />
+        <p className="mt-1 text-sm text-gray-400">
+          Select an image file to hide the message in
+        </p>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-300">
           <div className="flex items-center">
             <FaFile className="w-4 h-4 mr-2" />
-            Secret File
+            Message File
           </div>
         </label>
         <input
           type="file"
-          onChange={(e) => setSecretFile(e.target.files[0])}
+          onChange={(e) => setMessageFile(e.target.files[0])}
           className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
         />
+        <p className="mt-1 text-sm text-gray-400">
+          Select the file to hide in the carrier image
+        </p>
       </div>
 
       <button
-        onClick={checkCapacity}
-        disabled={loading || !coverFileEmbed}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
-      >
-        <FaSearch className="w-4 h-4 mr-2" />
-        {loading ? "Checking..." : "Check Capacity"}
-      </button>
-
-      {embedCapacity !== null && (
-        <div className="p-4 rounded-md bg-gray-900/50 text-gray-300">
-          Available Capacity: {embedCapacity} bits ({Math.floor(embedCapacity / 8)} bytes)
-        </div>
-      )}
-
-      <button
         onClick={handleEmbed}
-        disabled={loading || !coverFileEmbed || !secretFile}
+        disabled={loading || !carrierFile || !messageFile}
         className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
       >
         <FaEye className="w-4 h-4 mr-2" />
@@ -204,7 +163,7 @@ export default function SteganographyPage() {
         <label className="block text-sm font-medium text-gray-300">
           <div className="flex items-center">
             <FaImage className="w-4 h-4 mr-2" />
-            Carrier File (Image with hidden data)
+            Modified Carrier File
           </div>
         </label>
         <input
@@ -213,6 +172,9 @@ export default function SteganographyPage() {
           onChange={(e) => setCarrierFile(e.target.files[0])}
           className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
         />
+        <p className="mt-1 text-sm text-gray-400">
+          Select the modified image file containing the hidden message
+        </p>
       </div>
 
       <button
@@ -252,7 +214,8 @@ export default function SteganographyPage() {
                 setOperation(e.target.value);
                 setOutputFileUrl(null);
                 setOutputFileName("");
-                setEmbedCapacity(null);
+                setCarrierFile(null);
+                setMessageFile(null);
               }}
               className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
             >
@@ -276,6 +239,9 @@ export default function SteganographyPage() {
               <option value="fixed">Fixed</option>
               <option value="variable">Variable</option>
             </select>
+            <p className="mt-1 text-sm text-gray-400">
+              Must use the same mode for embedding and extracting
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -290,6 +256,9 @@ export default function SteganographyPage() {
                 onChange={(e) => setSValue(parseInt(e.target.value))}
                 className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
               />
+              <p className="mt-1 text-sm text-gray-400">
+                Must match for extract
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300">
@@ -302,6 +271,9 @@ export default function SteganographyPage() {
                 onChange={(e) => setLValue(parseInt(e.target.value))}
                 className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
               />
+              <p className="mt-1 text-sm text-gray-400">
+                Must match for extract
+              </p>
             </div>
           </div>
 
@@ -314,7 +286,7 @@ export default function SteganographyPage() {
               className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center"
             >
               <FaDownload className="w-4 h-4 mr-2" />
-              Download {operation === "embed" ? "Carrier" : "Extracted"} File
+              Download {operation === "embed" ? "Modified Carrier" : "Extracted"} File
             </a>
           )}
         </div>
