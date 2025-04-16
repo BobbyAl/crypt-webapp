@@ -12,6 +12,8 @@ export default function EncryptPage() {
   const [file, setFile] = useState(null);
   const [method, setMethod] = useState("aes");
   const [key, setKey] = useState("");
+  const [aesKeySize, setAesKeySize] = useState("256");
+  const [aesMode, setAesMode] = useState("cbc");
   const [encryptedFileUrl, setEncryptedFileUrl] = useState(null);
   const [encryptedFileName, setEncryptedFileName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,6 +41,12 @@ export default function EncryptPage() {
     formData.append("file", file);
     formData.append("method", method);
     formData.append("key", key);
+
+    // Add AES-specific parameters
+    if (method === "aes") {
+      formData.append("key_size", parseInt(aesKeySize));
+      formData.append("block_mode", aesMode);
+    }
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/encrypt`, {
@@ -127,6 +135,51 @@ export default function EncryptPage() {
               <option value="rsa">RSA (max file size: 190 bytes)</option>
             </select>
           </div>
+
+          {method === "aes" && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-300">
+                  <div className="flex items-center">
+                    <FaKey className="w-4 h-4 mr-2" />
+                    AES Key Size
+                  </div>
+                </label>
+                <select
+                  value={aesKeySize}
+                  onChange={(e) => setAesKeySize(e.target.value)}
+                  className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="128">AES-128</option>
+                  <option value="192">AES-192</option>
+                  <option value="256">AES-256 (Recommended)</option>
+                </select>
+                <p className="mt-1 text-sm text-gray-400">
+                  Larger key sizes provide stronger security but may be slightly slower
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300">
+                  <div className="flex items-center">
+                    <FaLock className="w-4 h-4 mr-2" />
+                    Block Mode
+                  </div>
+                </label>
+                <select
+                  value={aesMode}
+                  onChange={(e) => setAesMode(e.target.value)}
+                  className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="cbc">CBC - Cipher Block Chaining</option>
+                  <option value="gcm">GCM - Galois/Counter Mode (Authenticated)</option>
+                </select>
+                <p className="mt-1 text-sm text-gray-400">
+                  GCM provides authentication and is recommended for most uses
+                </p>
+              </div>
+            </>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-300">
