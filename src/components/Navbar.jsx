@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaChevronDown, FaUser, FaTachometerAlt, FaLock } from 'react-icons/fa';
+import { FaChevronDown, FaUser, FaTachometerAlt, FaLock, FaShieldAlt } from 'react-icons/fa';
 
 export default function Navbar() {
   const [isModesOpen, setIsModesOpen] = useState(false);
@@ -12,13 +12,14 @@ export default function Navbar() {
   const isActive = (path) => pathname === path;
 
   return (
-    <nav className="bg-[#111827] shadow-lg">
+    <nav className="bg-[#111827]/90 border-b border-white/10 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-20">
           {/* Left - Logo */}
           <div className="flex items-center">
             <Link href="/dashboard" className="flex items-center text-white font-bold text-xl">
-              CryptoSite
+              <FaShieldAlt className="w-6 h-6 mr-2" />
+              Crypt
             </Link>
           </div>
 
