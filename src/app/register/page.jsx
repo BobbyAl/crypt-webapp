@@ -8,8 +8,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaEnvelope, FaLock, FaArrowLeft } from "react-icons/fa";
 
-const basePath = "/crypt-webapp";
-
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +29,7 @@ export default function RegisterPage() {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push(`${basePath}/dashboard`);
+      router.push("/dashboard");
     } catch (err) {
       setError("Failed to create an account. Please try again.");
       console.error(err);
@@ -120,7 +118,7 @@ export default function RegisterPage() {
 
             <div className="text-center">
               <Link
-                href={`${basePath}/login`}
+                href="/login"
                 className="font-medium text-blue-400 hover:text-blue-500"
               >
                 Already have an account? Sign in here
