@@ -1,15 +1,32 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaChevronDown, FaUser, FaTachometerAlt, FaLock, FaShieldAlt } from 'react-icons/fa';
+import { auth } from "@/firebase/config";
 
 export default function Navbar() {
   const [isModesOpen, setIsModesOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const pathname = usePathname();
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAuthenticated(!!user);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const isActive = (path) => pathname === path;
+
+  const handleAccountClick = (e) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      window.location.href = "/login";
+    }
+  };
 
   return (
     <nav className="bg-[#111827]/90 border-b border-white/10 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
@@ -97,7 +114,8 @@ export default function Navbar() {
           {/* Right - Account */}
           <div className="hidden md:flex items-center">
             <Link
-              href="/account"
+              href={isAuthenticated ? "/account" : "/login"}
+              onClick={handleAccountClick}
               className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
                 isActive('/account')
                   ? 'text-blue-400 border-b-2 border-blue-400'
@@ -105,7 +123,7 @@ export default function Navbar() {
               }`}
             >
               <FaUser className="mr-2" />
-              Account
+              {isAuthenticated ? "Account" : "Sign In"}
             </Link>
           </div>
         </div>
