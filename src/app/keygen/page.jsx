@@ -11,6 +11,7 @@ import {
   FaHashtag,
   FaAsterisk,
   FaDownload,
+  FaUserFriends,
 } from "react-icons/fa";
 
 export default function KeygenPage() {
@@ -19,6 +20,7 @@ export default function KeygenPage() {
   const [dhState, setDhState] = useState({
     myKeyPair: null,
     myPublicKey: "",
+    otherKeyPair: null,
     otherPublicKey: "",
     sharedSecret: ""
   });
@@ -105,7 +107,8 @@ export default function KeygenPage() {
       setDhState(prev => ({
         ...prev,
         myKeyPair: keyPair,
-        myPublicKey: publicKeyBase64
+        myPublicKey: publicKeyBase64,
+        sharedSecret: "" // Reset shared secret when generating new key
       }));
       setCopyFeedback('Your DH key pair generated!');
     } catch (err) {
@@ -116,34 +119,65 @@ export default function KeygenPage() {
     }
   };
 
+  const generateOtherDHKey = async () => {
+    try {
+      setLoading(prev => ({ ...prev, dh: true }));
+      const params = { name: "ECDH", namedCurve: "P-256" };
+      
+      // Generate other party's key pair
+      const keyPair = await crypto.subtle.generateKey(params, true, ["deriveKey"]);
+      const publicKeyRaw = await crypto.subtle.exportKey("spki", keyPair.publicKey);
+      const publicKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(publicKeyRaw)));
+      
+      setDhState(prev => ({
+        ...prev,
+        otherKeyPair: keyPair,
+        otherPublicKey: publicKeyBase64,
+        sharedSecret: "" // Reset shared secret when generating new key
+      }));
+      setCopyFeedback('Other party\'s DH key pair generated!');
+    } catch (err) {
+      console.error("DH Key Generation Error:", err);
+      setCopyFeedback('Failed to generate other party\'s DH key');
+    } finally {
+      setLoading(prev => ({ ...prev, dh: false }));
+    }
+  };
+
   const deriveSharedSecret = async () => {
     try {
       if (!dhState.myKeyPair || !dhState.otherPublicKey) {
-        setCopyFeedback('Generate your key and enter other party\'s public key first');
+        setCopyFeedback('Generate your key and enter/generate other party\'s public key first');
         return;
       }
 
       setLoading(prev => ({ ...prev, dh: true }));
       
-      // Convert base64 public key back to CryptoKey
-      const binaryStr = atob(dhState.otherPublicKey);
-      const bytes = new Uint8Array(binaryStr.length);
-      for (let i = 0; i < binaryStr.length; i++) {
-        bytes[i] = binaryStr.charCodeAt(i);
+      let otherPublicKey;
+      if (dhState.otherKeyPair) {
+        // If we generated the other party's key, use it directly
+        otherPublicKey = dhState.otherKeyPair.publicKey;
+      } else {
+        // Convert base64 public key back to CryptoKey
+        const binaryStr = atob(dhState.otherPublicKey);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+        
+        const params = { name: "ECDH", namedCurve: "P-256" };
+        otherPublicKey = await crypto.subtle.importKey(
+          "spki",
+          bytes,
+          params,
+          true,
+          []
+        );
       }
-      
-      const params = { name: "ECDH", namedCurve: "P-256" };
-      const otherPublicKey = await crypto.subtle.importKey(
-        "spki",
-        bytes,
-        params,
-        true,
-        []
-      );
 
       // Derive shared secret
       const sharedKey = await crypto.subtle.deriveKey(
-        { ...params, public: otherPublicKey },
+        { name: "ECDH", public: otherPublicKey },
         dhState.myKeyPair.privateKey,
         { name: "AES-GCM", length: 256 },
         true,
@@ -347,7 +381,7 @@ export default function KeygenPage() {
               Diffie-Hellman Key Exchange
             </h3>
             <p className="text-sm text-gray-400">
-              Generate your key pair, exchange public keys with another party, and derive a shared secret
+              Generate your key pair, exchange public keys with another party (or simulate), and derive a shared secret
             </p>
             <div className="space-y-4">
               <button
@@ -383,6 +417,14 @@ export default function KeygenPage() {
                   onChange={(e) => setDhState(prev => ({ ...prev, otherPublicKey: e.target.value }))}
                   className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm h-32 font-mono focus:ring-blue-500 focus:border-blue-500"
                 />
+                <button
+                  onClick={generateOtherDHKey}
+                  disabled={loading.dh}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+                >
+                  <FaUserFriends className="w-4 h-4 mr-2" />
+                  {loading.dh ? "Generating..." : "Simulate: Generate Other Party's Key"}
+                </button>
               </div>
 
               <button
