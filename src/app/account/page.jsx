@@ -68,8 +68,8 @@ export default function AccountPage() {
       // Delete user account
       await deleteUser(user);
       
-      // Redirect to home page
-      window.location.href = "/";
+      // Redirect to home page with correct path
+      window.location.href = "/crypt-webapp";
     } catch (error) {
       console.error("Error deleting account:", error);
       setMessage({ text: "Failed to delete account: " + error.message, type: "error" });
