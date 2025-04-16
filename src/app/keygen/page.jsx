@@ -127,31 +127,41 @@ export default function KeygenPage() {
   };
 
   const generatePassword = () => {
-    setIsPasswordLoading(true);
-    const length = 16;
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const numbers = '0123456789';
-    const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
-    const alphabet = uppercase + lowercase + numbers + symbols;
-    
-    let password = '';
-    // Ensure at least one of each type
-    password += uppercase[Math.floor(Math.random() * uppercase.length)];
-    password += lowercase[Math.floor(Math.random() * lowercase.length)];
-    password += numbers[Math.floor(Math.random() * numbers.length)];
-    password += symbols[Math.floor(Math.random() * symbols.length)];
-    
-    // Fill the rest randomly
-    for (let i = password.length; i < length; i++) {
-      password += alphabet[Math.floor(Math.random() * alphabet.length)];
+    setLoading(prev => ({ ...prev, password: true }));
+    try {
+      const length = passwordLength;
+      const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+      const numbers = '0123456789';
+      const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+      
+      let charset = lowercase;
+      if (includeUppercase) charset += uppercase;
+      if (includeNumbers) charset += numbers;
+      if (includeSymbols) charset += symbols;
+      
+      let password = '';
+      // Ensure at least one character from each selected type
+      if (includeUppercase) password += uppercase[Math.floor(Math.random() * uppercase.length)];
+      password += lowercase[Math.floor(Math.random() * lowercase.length)];
+      if (includeNumbers) password += numbers[Math.floor(Math.random() * numbers.length)];
+      if (includeSymbols) password += symbols[Math.floor(Math.random() * symbols.length)];
+      
+      // Fill the rest randomly
+      while (password.length < length) {
+        password += charset[Math.floor(Math.random() * charset.length)];
+      }
+      
+      // Shuffle the password
+      password = password.split('').sort(() => Math.random() - 0.5).join('');
+      
+      setPassword(password);
+    } catch (error) {
+      console.error('Password Generation Error:', error);
+      setCopyFeedback('Failed to generate password');
+    } finally {
+      setLoading(prev => ({ ...prev, password: false }));
     }
-    
-    // Shuffle the password
-    password = password.split('').sort(() => Math.random() - 0.5).join('');
-    
-    setPassword(password);
-    setIsPasswordLoading(false);
   };
 
   const downloadKeys = () => {
