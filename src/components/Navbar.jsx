@@ -54,40 +54,39 @@ export default function Navbar() {
               </button>
 
               {isModesOpen && (
-                <div className="absolute z-10 top-full mt-1 w-48 rounded-md shadow-lg bg-[#1F2937] ring-1 ring-black ring-opacity-5">
+                <div 
+                  className="absolute z-10 top-full left-0 mt-1 w-48 rounded-md shadow-lg bg-[#1F2937] ring-1 ring-black ring-opacity-5"
+                  onMouseEnter={() => setIsModesOpen(true)}
+                  onMouseLeave={() => setIsModesOpen(false)}
+                >
                   <div className="py-1" role="menu">
                     <Link
                       href="/encrypt"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                      onClick={() => setIsModesOpen(false)}
                     >
                       Encrypt
                     </Link>
                     <Link
                       href="/decrypt"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                      onClick={() => setIsModesOpen(false)}
                     >
                       Decrypt
                     </Link>
                     <Link
                       href="/hash"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                      onClick={() => setIsModesOpen(false)}
                     >
                       Hash
                     </Link>
                     <Link
                       href="/keygen"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                      onClick={() => setIsModesOpen(false)}
                     >
                       Key Generation
                     </Link>
                     <Link
                       href="/steganography"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                      onClick={() => setIsModesOpen(false)}
                     >
                       Steganography
                     </Link>
