@@ -6,9 +6,9 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase/config";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaEnvelope, FaLock } from "react-icons/fa";
+import { FaEnvelope, FaLock, FaArrowLeft } from "react-icons/fa";
 
-export default function LoginPage() {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,15 +25,24 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.message || "Failed to sign in. Please check your credentials.");
+      setError("Failed to log in. Please check your credentials.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        {/* Back Button */}
+        <Link
+          href="/"
+          className="inline-flex items-center text-gray-400 hover:text-white transition-colors"
+        >
+          <FaArrowLeft className="w-4 h-4 mr-2" />
+          <span>Back to Home</span>
+        </Link>
+
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Sign in to your account

@@ -14,7 +14,7 @@ export default function Home() {
             </h1>
             <p className="text-xl text-gray-400 max-w-2xl">
               Advanced (not really) encryption tools for your sensitive information. 
-              Military-grade (def not) security made simple and accessible.
+              Military-grade (def not) security made simple.
             </p>
           </div>
           
