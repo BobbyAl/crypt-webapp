@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Crypt - Secure Encryption Tools",
-  description: "Secure encryption and cryptographic tools for your data protection needs.",
+  description: "Secure encryption and cryptographic tools.",
 };
 
 export default function RootLayout({ children }) {
