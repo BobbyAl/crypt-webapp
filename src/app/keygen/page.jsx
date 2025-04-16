@@ -222,247 +222,223 @@ export default function KeygenPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-lg w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-xl w-full space-y-8 bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl shadow-xl">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            Key Generation Tools
-          </h2>
+          <h1 className="text-3xl font-bold text-center text-white flex items-center justify-center">
+            Key Generation <FaKey className="ml-3 w-8 h-8" />
+          </h1>
+          <p className="mt-2 text-center text-gray-400">
+            Generate cryptographic keys and secure passwords
+          </p>
         </div>
 
         {copyFeedback && (
-          <div className="p-3 rounded-md text-sm text-center bg-blue-500/10 text-blue-500">
+          <div className="p-4 rounded-md bg-blue-500/10 text-blue-500 text-center">
             {copyFeedback}
           </div>
         )}
 
-        {/* AES Key Generation */}
-        <div className="space-y-4 bg-gray-800 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold text-white flex items-center">
-            <FaLock className="w-5 h-5 mr-2" />
-            AES Key
-          </h3>
-          <button
-            onClick={generateAesKey}
-            disabled={loading.aes}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50"
-          >
-            <FaRandom className="w-4 h-4 mr-2" />
-            {loading.aes ? "Generating..." : "Generate AES Key"}
-          </button>
-          {aesKey && (
-            <div className="relative">
-              <textarea
-                readOnly
-                value={aesKey}
-                className="w-full h-24 p-2 bg-gray-900 text-gray-300 rounded-md font-mono text-sm"
-              />
-              <button
-                onClick={() => handleCopy(aesKey, "AES key")}
-                className="absolute top-2 right-2 text-gray-400 hover:text-white"
-                title="Copy to clipboard"
-              >
-                <FaCopy />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* RSA Key Generation */}
-        <div className="space-y-4 bg-gray-800 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold text-white flex items-center">
-            <FaKey className="w-5 h-5 mr-2" />
-            RSA Keys
-          </h3>
-          <button
-            onClick={generateRsaKeyPair}
-            disabled={loading.rsa}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50"
-          >
-            <FaKey className="w-4 h-4 mr-2" />
-            {loading.rsa ? "Generating..." : "Generate RSA Keys"}
-          </button>
-
-          {rsaKeys.publicKey && (
-            <>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Public Key</label>
-                <div className="relative">
-                  <textarea
-                    readOnly
-                    value={rsaKeys.publicKey}
-                    className="w-full h-24 p-2 bg-gray-900 text-gray-300 rounded-md font-mono text-sm"
-                  />
-                  <div className="absolute top-2 right-2 flex space-x-2">
-                    <button
-                      onClick={() => handleCopy(rsaKeys.publicKey, "Public key")}
-                      className="text-gray-400 hover:text-white"
-                      title="Copy to clipboard"
-                    >
-                      <FaCopy />
-                    </button>
-                    <button
-                      onClick={() => downloadSingleKey(rsaKeys.publicKey, 'public-key.txt')}
-                      className="text-gray-400 hover:text-white"
-                      title="Download as file"
-                    >
-                      <FaDownload />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Private Key</label>
-                <div className="relative">
-                  <textarea
-                    readOnly
-                    value={rsaKeys.privateKey}
-                    className="w-full h-24 p-2 bg-gray-900 text-gray-300 rounded-md font-mono text-sm"
-                  />
-                  <div className="absolute top-2 right-2 flex space-x-2">
-                    <button
-                      onClick={() => handleCopy(rsaKeys.privateKey, "Private key")}
-                      className="text-gray-400 hover:text-white"
-                      title="Copy to clipboard"
-                    >
-                      <FaCopy />
-                    </button>
-                    <button
-                      onClick={() => downloadSingleKey(rsaKeys.privateKey, 'private-key.txt')}
-                      className="text-gray-400 hover:text-white"
-                      title="Download as file"
-                    >
-                      <FaDownload />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={downloadKeys}
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center"
-              >
-                <FaDownload className="w-4 h-4 mr-2" />
-                Download Both Keys
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Diffie-Hellman Simulation */}
-        <div className="space-y-4 bg-gray-800 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold text-white flex items-center">
-            <FaExchangeAlt className="w-5 h-5 mr-2" />
-            Diffie-Hellman Simulation
-          </h3>
-          <button
-            onClick={simulateDH}
-            disabled={loading.dh}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50"
-          >
-            <FaRandom className="w-4 h-4 mr-2" />
-            {loading.dh ? "Simulating..." : "Simulate DH Exchange"}
-          </button>
-          {dhSharedSecret && (
-            <div className="relative">
-              <textarea
-                readOnly
-                value={dhSharedSecret}
-                className="w-full h-24 p-2 bg-gray-900 text-gray-300 rounded-md font-mono text-sm"
-              />
-              <button
-                onClick={() => handleCopy(dhSharedSecret, "DH Secret")}
-                className="absolute top-2 right-2 text-gray-400 hover:text-white"
-                title="Copy to clipboard"
-              >
-                <FaCopy />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Password Generation */}
-        <div className="space-y-4 bg-gray-800 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold text-white flex items-center">
-            <FaKey className="w-5 h-5 mr-2" />
-            Password Generation
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-300 flex items-center">
-                <FaHashtag className="w-4 h-4 mr-2" />
-                Password Length: {passwordLength}
-              </label>
-              <input
-                type="range"
-                min="8"
-                max="64"
-                value={passwordLength}
-                onChange={(e) => setPasswordLength(parseInt(e.target.value))}
-                className="w-full"
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={includeUppercase}
-                  onChange={(e) => setIncludeUppercase(e.target.checked)}
-                  className="form-checkbox"
-                />
-                <span className="text-sm text-gray-300 flex items-center">
-                  <FaFont className="w-3 h-3 mr-1" />
-                  ABC
-                </span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={includeNumbers}
-                  onChange={(e) => setIncludeNumbers(e.target.checked)}
-                  className="form-checkbox"
-                />
-                <span className="text-sm text-gray-300 flex items-center">
-                  <FaHashtag className="w-3 h-3 mr-1" />
-                  123
-                </span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={includeSymbols}
-                  onChange={(e) => setIncludeSymbols(e.target.checked)}
-                  className="form-checkbox"
-                />
-                <span className="text-sm text-gray-300 flex items-center">
-                  <FaAsterisk className="w-3 h-3 mr-1" />
-                  @#$
-                </span>
-              </label>
-            </div>
+        <div className="space-y-6">
+          {/* AES Key Generation */}
+          <div className="space-y-4 p-4 rounded-md bg-gray-900/50">
+            <h3 className="text-xl font-semibold text-white flex items-center">
+              <FaLock className="w-5 h-5 mr-2" />
+              AES Key
+            </h3>
             <button
-              onClick={generatePassword}
-              disabled={loading.password}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50"
+              onClick={generateAesKey}
+              disabled={loading.aes}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
             >
               <FaRandom className="w-4 h-4 mr-2" />
-              {loading.password ? "Generating..." : "Generate Password"}
+              {loading.aes ? "Generating..." : "Generate AES Key"}
             </button>
-            {password && (
-              <div className="relative">
-                <div className="p-4 bg-gray-900 rounded-md text-xl font-mono text-gray-300 text-center break-all">
-                  {password}
+            {aesKey && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
+                  <code className="text-sm text-gray-300 font-mono break-all">{aesKey}</code>
+                  <button
+                    onClick={() => handleCopy(aesKey, "AES key")}
+                    className="ml-2 p-2 text-gray-400 hover:text-white"
+                  >
+                    <FaCopy className="w-4 h-4" />
+                  </button>
                 </div>
                 <button
-                  onClick={() => handleCopy(password, "Password")}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-white"
-                  title="Copy to clipboard"
+                  onClick={() => downloadSingleKey(aesKey, 'aes-key.txt')}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition flex items-center justify-center"
                 >
-                  <FaCopy />
+                  <FaDownload className="w-4 h-4 mr-2" />
+                  Download Key
                 </button>
               </div>
             )}
+          </div>
+
+          {/* RSA Key Generation */}
+          <div className="space-y-4 p-4 rounded-md bg-gray-900/50">
+            <h3 className="text-xl font-semibold text-white flex items-center">
+              <FaKey className="w-5 h-5 mr-2" />
+              RSA Key Pair
+            </h3>
+            <button
+              onClick={generateRsaKeyPair}
+              disabled={loading.rsa}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+            >
+              <FaRandom className="w-4 h-4 mr-2" />
+              {loading.rsa ? "Generating..." : "Generate RSA Keys"}
+            </button>
+            {(rsaKeys.publicKey || rsaKeys.privateKey) && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-300">Public Key</label>
+                  <div className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
+                    <code className="text-sm text-gray-300 font-mono break-all">{rsaKeys.publicKey}</code>
+                    <button
+                      onClick={() => handleCopy(rsaKeys.publicKey, "Public key")}
+                      className="ml-2 p-2 text-gray-400 hover:text-white"
+                    >
+                      <FaCopy className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-300">Private Key</label>
+                  <div className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
+                    <code className="text-sm text-gray-300 font-mono break-all">{rsaKeys.privateKey}</code>
+                    <button
+                      onClick={() => handleCopy(rsaKeys.privateKey, "Private key")}
+                      className="ml-2 p-2 text-gray-400 hover:text-white"
+                    >
+                      <FaCopy className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={downloadKeys}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition flex items-center justify-center"
+                >
+                  <FaDownload className="w-4 h-4 mr-2" />
+                  Download Key Pair
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* DH Shared Secret */}
+          <div className="space-y-4 p-4 rounded-md bg-gray-900/50">
+            <h3 className="text-xl font-semibold text-white flex items-center">
+              <FaExchangeAlt className="w-5 h-5 mr-2" />
+              DH Shared Secret
+            </h3>
+            <button
+              onClick={simulateDH}
+              disabled={loading.dh}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+            >
+              <FaRandom className="w-4 h-4 mr-2" />
+              {loading.dh ? "Simulating..." : "Simulate DH Exchange"}
+            </button>
+            {dhSharedSecret && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
+                  <code className="text-sm text-gray-300 font-mono break-all">{dhSharedSecret}</code>
+                  <button
+                    onClick={() => handleCopy(dhSharedSecret, "DH secret")}
+                    className="ml-2 p-2 text-gray-400 hover:text-white"
+                  >
+                    <FaCopy className="w-4 h-4" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => downloadSingleKey(dhSharedSecret, 'dh-secret.txt')}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition flex items-center justify-center"
+                >
+                  <FaDownload className="w-4 h-4 mr-2" />
+                  Download Secret
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Password Generation */}
+          <div className="space-y-4 p-4 rounded-md bg-gray-900/50">
+            <h3 className="text-xl font-semibold text-white flex items-center">
+              <FaAsterisk className="w-5 h-5 mr-2" />
+              Password Generator
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300">Password Length</label>
+                <input
+                  type="number"
+                  min="8"
+                  max="64"
+                  value={passwordLength}
+                  onChange={(e) => setPasswordLength(parseInt(e.target.value))}
+                  className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={includeUppercase}
+                    onChange={(e) => setIncludeUppercase(e.target.checked)}
+                    className="rounded border-gray-600 bg-gray-900 text-blue-500 focus:ring-blue-500"
+                  />
+                  <span className="text-gray-300">Include Uppercase</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={includeNumbers}
+                    onChange={(e) => setIncludeNumbers(e.target.checked)}
+                    className="rounded border-gray-600 bg-gray-900 text-blue-500 focus:ring-blue-500"
+                  />
+                  <span className="text-gray-300">Include Numbers</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={includeSymbols}
+                    onChange={(e) => setIncludeSymbols(e.target.checked)}
+                    className="rounded border-gray-600 bg-gray-900 text-blue-500 focus:ring-blue-500"
+                  />
+                  <span className="text-gray-300">Include Symbols</span>
+                </label>
+              </div>
+              <button
+                onClick={generatePassword}
+                disabled={loading.password}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+              >
+                <FaRandom className="w-4 h-4 mr-2" />
+                {loading.password ? "Generating..." : "Generate Password"}
+              </button>
+              {password && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
+                    <code className="text-sm text-gray-300 font-mono">{password}</code>
+                    <button
+                      onClick={() => handleCopy(password, "Password")}
+                      className="ml-2 p-2 text-gray-400 hover:text-white"
+                    >
+                      <FaCopy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => downloadSingleKey(password, 'password.txt')}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition flex items-center justify-center"
+                  >
+                    <FaDownload className="w-4 h-4 mr-2" />
+                    Download Password
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
