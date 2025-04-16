@@ -61,8 +61,8 @@ export default function DecryptPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-xl w-full space-y-8 bg-gray-800 p-8 rounded-xl shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-xl w-full space-y-8 bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl shadow-xl">
         <div>
           <h1 className="text-3xl font-bold text-center text-white flex items-center justify-center">
             Decrypt File <FaLockOpen className="ml-3 w-8 h-8" />

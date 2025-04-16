@@ -97,107 +97,122 @@ export default function HashPage() {
   };
 
   return (
-    <div className="flex items-center justify-center py-12 px-6">
-      <div className="bg-[#111827] rounded-2xl shadow-xl p-10 max-w-xl w-full">
-        <h1 className="text-3xl font-bold mb-6 text-center text-white flex items-center justify-center">
-          Hash File <FaFlask className="ml-3 w-8 h-8" />
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-xl w-full space-y-8 bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl shadow-xl">
+        <div>
+          <h1 className="text-3xl font-bold text-center text-white flex items-center justify-center">
+            Hash File <FaFlask className="ml-3 w-8 h-8" />
+          </h1>
+          <p className="mt-2 text-center text-gray-400">
+            Generate and compare file hashes using SHA-256 or SHA3-512
+          </p>
+        </div>
 
-        <label className="block text-sm font-semibold mb-2 text-gray-300">
-          <div className="flex items-center">
-            <FaHashtag className="w-4 h-4 mr-2" />
-            Hash Method
-          </div>
-        </label>
-        <select
-          value={method}
-          onChange={(e) => setMethod(e.target.value)}
-          className="mb-4 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm"
-        >
-          <option value="sha256">SHA-256</option>
-          <option value="sha3_512">SHA3-512</option>
-        </select>
-
-        <label className="block text-sm font-semibold mb-2 text-gray-300">
-          <div className="flex items-center">
-            <FaUpload className="w-4 h-4 mr-2" />
-            Upload First File
-          </div>
-        </label>
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files[0])}
-          className="mb-4 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm"
-        />
-        <button
-          onClick={handleHash}
-          disabled={loading}
-          className="mb-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <FaHashtag className="w-4 h-4 mr-2" />
-          {loading ? "Generating..." : "Generate Hash"}
-        </button>
-
-        <label className="block text-sm font-semibold mb-2 text-gray-300">
-          <div className="flex items-center">
-            <FaUpload className="w-4 h-4 mr-2" />
-            Upload Second File (for comparison)
-          </div>
-        </label>
-        <input
-          type="file"
-          onChange={(e) => setSecondFile(e.target.files[0])}
-          className="mb-4 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm"
-          disabled={loading}
-        />
-        <button
-          onClick={handleCompare}
-          disabled={loading}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <FaEquals className="w-4 h-4 mr-2" />
-          {loading ? "Comparing..." : "Compare File Hashes"}
-        </button>
-
-        {/* Display single hash result */}
-        {hashResult && compareResult === null && (
-          <div className="mt-6 p-4 rounded bg-gray-800">
-            <div className="flex items-center text-xs text-gray-300 break-all font-mono">
-              <FaHashtag className="w-3 h-3 mr-2 flex-shrink-0" />
-              <span>Hash: {hashResult}</span>
-            </div>
-          </div>
-        )}
-
-        {compareResult !== null && (
-          <div className="mt-6 p-4 rounded bg-gray-800">
-            <div className="flex items-center text-xs text-gray-300 break-all font-mono mb-2">
-              <FaHashtag className="w-3 h-3 mr-2 flex-shrink-0" />
-              <span>File 1 Hash: {hashResult}</span>
-            </div>
-            <div className="flex items-center text-xs text-gray-300 break-all font-mono mb-2">
-              <FaHashtag className="w-3 h-3 mr-2 flex-shrink-0" />
-              <span>File 2 Hash: {secondHash}</span>
-            </div>
-            <div
-              className={`mt-2 font-bold flex items-center ${
-                compareResult ? "text-green-400" : "text-red-400"
-              }`}
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-300">
+              <div className="flex items-center">
+                <FaHashtag className="w-4 h-4 mr-2" />
+                Hash Method
+              </div>
+            </label>
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
             >
-              {compareResult ? (
-                <>
-                  <FaCheck className="w-4 h-4 mr-2" />
-                  Hashes match
-                </>
-              ) : (
-                <>
-                  <FaTimes className="w-4 h-4 mr-2" />
-                  Hashes do not match
-                </>
-              )}
-            </div>
+              <option value="sha256">SHA-256</option>
+              <option value="sha3_512">SHA3-512</option>
+            </select>
           </div>
-        )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300">
+              <div className="flex items-center">
+                <FaUpload className="w-4 h-4 mr-2" />
+                Upload First File
+              </div>
+            </label>
+            <input
+              type="file"
+              onChange={(e) => setFile(e.target.files[0])}
+              className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <button
+            onClick={handleHash}
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+          >
+            <FaHashtag className="w-4 h-4 mr-2" />
+            {loading ? "Generating..." : "Generate Hash"}
+          </button>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300">
+              <div className="flex items-center">
+                <FaUpload className="w-4 h-4 mr-2" />
+                Upload Second File (for comparison)
+              </div>
+            </label>
+            <input
+              type="file"
+              onChange={(e) => setSecondFile(e.target.files[0])}
+              className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+              disabled={loading}
+            />
+          </div>
+
+          <button
+            onClick={handleCompare}
+            disabled={loading}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+          >
+            <FaEquals className="w-4 h-4 mr-2" />
+            {loading ? "Comparing..." : "Compare File Hashes"}
+          </button>
+
+          {/* Display single hash result */}
+          {hashResult && compareResult === null && (
+            <div className="p-4 rounded-md bg-gray-900/50">
+              <div className="flex items-center text-sm text-gray-300 break-all font-mono">
+                <FaHashtag className="w-3 h-3 mr-2 flex-shrink-0" />
+                <span>Hash: {hashResult}</span>
+              </div>
+            </div>
+          )}
+
+          {compareResult !== null && (
+            <div className="p-4 rounded-md bg-gray-900/50 space-y-4">
+              <div className="flex items-center text-sm text-gray-300 break-all font-mono">
+                <FaHashtag className="w-3 h-3 mr-2 flex-shrink-0" />
+                <span>File 1 Hash: {hashResult}</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-300 break-all font-mono">
+                <FaHashtag className="w-3 h-3 mr-2 flex-shrink-0" />
+                <span>File 2 Hash: {secondHash}</span>
+              </div>
+              <div
+                className={`font-bold flex items-center ${
+                  compareResult ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {compareResult ? (
+                  <>
+                    <FaCheck className="w-4 h-4 mr-2" />
+                    Hashes match
+                  </>
+                ) : (
+                  <>
+                    <FaTimes className="w-4 h-4 mr-2" />
+                    Hashes do not match
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

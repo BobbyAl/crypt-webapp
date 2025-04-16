@@ -35,9 +35,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl w-full space-y-8 bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl shadow-xl">
+        <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-white">Cryptographic Tools</h1>
           <button
             onClick={handleLogout}
@@ -48,7 +48,7 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             { label: "Encrypt", href: "/encrypt", icon: FaLock, description: "Encrypt files using AES or RSA" },
             { label: "Decrypt", href: "/decrypt", icon: FaLockOpen, description: "Decrypt your encrypted files" },
