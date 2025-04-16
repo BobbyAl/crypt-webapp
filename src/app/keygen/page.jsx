@@ -1,20 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { auth, db } from "@/firebase/config";
-import { collection, addDoc, serverTimestamp, doc, setDoc } from "firebase/firestore";
 import {
   FaKey,
   FaCopy,
   FaRandom,
   FaLock,
   FaExchangeAlt,
-  FaCheck,
-  FaTimes,
   FaFont,
   FaHashtag,
   FaAsterisk,
-  FaSave
+  FaDownload,
 } from "react-icons/fa";
 
 export default function KeygenPage() {
@@ -26,14 +22,13 @@ export default function KeygenPage() {
   const [includeSymbols, setIncludeSymbols] = useState(true);
   const [includeNumbers, setIncludeNumbers] = useState(true);
   const [includeUppercase, setIncludeUppercase] = useState(true);
-  const [copyFeedback, setCopyFeedback] = useState("");
   const [loading, setLoading] = useState({
     aes: false,
     rsa: false,
     dh: false,
-    password: false,
-    save: false
+    password: false
   });
+  const [copyFeedback, setCopyFeedback] = useState("");
 
   const handleCopy = async (text, label) => {
     try {
@@ -43,28 +38,6 @@ export default function KeygenPage() {
     } catch (err) {
       setCopyFeedback("Failed to copy");
       setTimeout(() => setCopyFeedback(""), 2000);
-    }
-  };
-
-  const saveKeyToAccount = async (keyType, keyValue) => {
-    if (!auth.currentUser) {
-      setCopyFeedback("Please login to save keys");
-      return;
-    }
-
-    setLoading(prev => ({ ...prev, save: true }));
-    try {
-      await addDoc(collection(db, "users", auth.currentUser.uid, "keys"), {
-        type: keyType,
-        value: keyValue,
-        createdAt: serverTimestamp()
-      });
-      setCopyFeedback(`${keyType} key saved to account!`);
-    } catch (error) {
-      console.error('Error saving key:', error);
-      setCopyFeedback('Failed to save key');
-    } finally {
-      setLoading(prev => ({ ...prev, save: false }));
     }
   };
 
@@ -83,13 +56,10 @@ export default function KeygenPage() {
   };
 
   const generateRsaKeyPair = async () => {
-    if (!auth.currentUser) {
-      setCopyFeedback("Please login to generate RSA keys");
-      return;
-    }
-
     try {
       setLoading(prev => ({ ...prev, rsa: true }));
+      
+      // Generate RSA key pair
       const keyPair = await window.crypto.subtle.generateKey(
         {
           name: "RSA-OAEP",
@@ -101,26 +71,17 @@ export default function KeygenPage() {
         ["encrypt", "decrypt"]
       );
 
+      // Export keys to base64
       const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
       const privateKey = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
 
       const pubBase64 = btoa(String.fromCharCode(...new Uint8Array(publicKey)));
       const privBase64 = btoa(String.fromCharCode(...new Uint8Array(privateKey)));
 
-      // Store RSA keys in user's document
-      await setDoc(doc(db, "users", auth.currentUser.uid), {
-        rsaKeys: {
-          publicKey: pubBase64,
-          privateKey: privBase64,
-          createdAt: serverTimestamp()
-        }
-      }, { merge: true });
-
       setRsaKeys({ publicKey: pubBase64, privateKey: privBase64 });
-      setCopyFeedback("RSA keys generated and saved to account!");
     } catch (error) {
-      console.error('RSA Key Generation Error:', error);
-      setCopyFeedback('Failed to generate RSA keys');
+      console.error("Key Generation Error:", error);
+      setCopyFeedback("Failed to generate keys");
     } finally {
       setLoading(prev => ({ ...prev, rsa: false }));
     }
@@ -185,22 +146,15 @@ export default function KeygenPage() {
       const symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?";
 
       // Create an array of selected character sets
-      const selectedSets = [];
+      const selectedSets = [lowercase]; // Always include lowercase
       if (includeUppercase) selectedSets.push(uppercase);
       if (includeNumbers) selectedSets.push(numbers);
       if (includeSymbols) selectedSets.push(symbols);
-
-      // If no character types are selected, show alert
-      if (selectedSets.length === 0) {
-        alert("Please select at least one character type (uppercase, numbers, or symbols)");
-        return;
-      }
 
       // Join all selected character sets
       const chars = selectedSets.join('');
       
       // Generate password using cryptographically secure random values
-      let generated = "";
       const array = new Uint32Array(passwordLength);
       crypto.getRandomValues(array);
       
@@ -209,21 +163,13 @@ export default function KeygenPage() {
       let currentIndex = 0;
       
       // Add one character from each selected set
-      if (includeUppercase) {
-        const randomIndex = array[currentIndex] % uppercase.length;
-        password[currentIndex] = uppercase[randomIndex];
-        currentIndex++;
-      }
-      if (includeNumbers) {
-        const randomIndex = array[currentIndex] % numbers.length;
-        password[currentIndex] = numbers[randomIndex];
-        currentIndex++;
-      }
-      if (includeSymbols) {
-        const randomIndex = array[currentIndex] % symbols.length;
-        password[currentIndex] = symbols[randomIndex];
-        currentIndex++;
-      }
+      selectedSets.forEach(set => {
+        if (currentIndex < passwordLength) {
+          const randomIndex = array[currentIndex] % set.length;
+          password[currentIndex] = set[randomIndex];
+          currentIndex++;
+        }
+      });
       
       // Fill the rest with random characters from all selected sets
       for (let i = currentIndex; i < passwordLength; i++) {
@@ -246,252 +192,278 @@ export default function KeygenPage() {
     }
   };
 
-  return (
-    <div className="flex items-center justify-center py-12 px-6">
-      <div className="bg-[#111827] rounded-2xl shadow-xl p-10 max-w-xl w-full text-white">
-        <h1 className="text-3xl font-bold mb-6 text-center flex items-center justify-center">
-          Key Generation <FaKey className="ml-3 w-8 h-8" />
-        </h1>
+  const downloadKeys = () => {
+    const content = JSON.stringify({
+      publicKey: rsaKeys.publicKey,
+      privateKey: rsaKeys.privateKey
+    }, null, 2);
+    
+    const blob = new Blob([content], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'rsa-keys.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
-        {/* Copy feedback message */}
+  const downloadSingleKey = (key, filename) => {
+    const blob = new Blob([key], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-lg w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+            Key Generation Tools
+          </h2>
+        </div>
+
         {copyFeedback && (
-          <div className="fixed top-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center">
-            <span className="mr-2">{copyFeedback}</span>
+          <div className="p-3 rounded-md text-sm text-center bg-blue-500/10 text-blue-500">
+            {copyFeedback}
           </div>
         )}
 
         {/* AES Key Generation */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
+        <div className="space-y-4 bg-gray-800 p-6 rounded-lg">
+          <h3 className="text-xl font-semibold text-white flex items-center">
             <FaLock className="w-5 h-5 mr-2" />
             AES Key
-          </h2>
-          <div className="flex space-x-4">
-            <button
-              onClick={generateAesKey}
-              disabled={loading.aes}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold transition flex items-center justify-center"
-            >
-              <FaRandom className="w-4 h-4 mr-2" />
-              {loading.aes ? "Generating..." : "Generate AES Key"}
-            </button>
-            {aesKey && (
-              <button
-                onClick={() => saveKeyToAccount('AES', aesKey)}
-                disabled={loading.save || !auth.currentUser}
-                className="px-4 bg-green-600 hover:bg-green-700 rounded-lg flex items-center justify-center"
-              >
-                <FaSave className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+          </h3>
+          <button
+            onClick={generateAesKey}
+            disabled={loading.aes}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50"
+          >
+            <FaRandom className="w-4 h-4 mr-2" />
+            {loading.aes ? "Generating..." : "Generate AES Key"}
+          </button>
           {aesKey && (
             <div className="relative">
               <textarea
                 readOnly
                 value={aesKey}
-                className="mt-2 w-full p-2 bg-gray-900 border border-gray-700 rounded text-sm font-mono"
-                rows={2}
+                className="w-full h-24 p-2 bg-gray-900 text-gray-300 rounded-md font-mono text-sm"
               />
               <button
                 onClick={() => handleCopy(aesKey, "AES key")}
-                className="absolute right-2 top-2 text-gray-400 hover:text-white"
+                className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                title="Copy to clipboard"
               >
-                <FaCopy className="w-4 h-4" />
+                <FaCopy />
               </button>
             </div>
           )}
         </div>
 
         {/* RSA Key Generation */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
+        <div className="space-y-4 bg-gray-800 p-6 rounded-lg">
+          <h3 className="text-xl font-semibold text-white flex items-center">
             <FaKey className="w-5 h-5 mr-2" />
-            RSA Key Pair
-          </h2>
+            RSA Keys
+          </h3>
           <button
             onClick={generateRsaKeyPair}
-            disabled={loading.rsa || !auth.currentUser}
-            className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold transition flex items-center justify-center"
+            disabled={loading.rsa}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50"
           >
             <FaKey className="w-4 h-4 mr-2" />
-            {loading.rsa ? "Generating..." : "Generate RSA Key Pair"}
+            {loading.rsa ? "Generating..." : "Generate RSA Keys"}
           </button>
-          {!auth.currentUser && (
-            <p className="text-yellow-500 text-sm mb-4">Please login to generate and save RSA keys</p>
-          )}
+
           {rsaKeys.publicKey && (
-            <div className="mt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-semibold">Public Key:</span>
-                <button
-                  onClick={() => handleCopy(rsaKeys.publicKey, "Public key")}
-                  className="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded flex items-center"
-                >
-                  <FaCopy className="w-3 h-3" />
-                </button>
+            <>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">Public Key</label>
+                <div className="relative">
+                  <textarea
+                    readOnly
+                    value={rsaKeys.publicKey}
+                    className="w-full h-24 p-2 bg-gray-900 text-gray-300 rounded-md font-mono text-sm"
+                  />
+                  <div className="absolute top-2 right-2 flex space-x-2">
+                    <button
+                      onClick={() => handleCopy(rsaKeys.publicKey, "Public key")}
+                      className="text-gray-400 hover:text-white"
+                      title="Copy to clipboard"
+                    >
+                      <FaCopy />
+                    </button>
+                    <button
+                      onClick={() => downloadSingleKey(rsaKeys.publicKey, 'public-key.txt')}
+                      className="text-gray-400 hover:text-white"
+                      title="Download as file"
+                    >
+                      <FaDownload />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="relative">
-                <textarea
-                  readOnly
-                  value={rsaKeys.publicKey}
-                  className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-sm font-mono"
-                  rows={3}
-                />
-                <button
-                  onClick={() => handleCopy(rsaKeys.publicKey, "Public key")}
-                  className="absolute right-2 top-2 text-gray-400 hover:text-white"
-                >
-                  <FaCopy className="w-4 h-4" />
-                </button>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">Private Key</label>
+                <div className="relative">
+                  <textarea
+                    readOnly
+                    value={rsaKeys.privateKey}
+                    className="w-full h-24 p-2 bg-gray-900 text-gray-300 rounded-md font-mono text-sm"
+                  />
+                  <div className="absolute top-2 right-2 flex space-x-2">
+                    <button
+                      onClick={() => handleCopy(rsaKeys.privateKey, "Private key")}
+                      className="text-gray-400 hover:text-white"
+                      title="Copy to clipboard"
+                    >
+                      <FaCopy />
+                    </button>
+                    <button
+                      onClick={() => downloadSingleKey(rsaKeys.privateKey, 'private-key.txt')}
+                      className="text-gray-400 hover:text-white"
+                      title="Download as file"
+                    >
+                      <FaDownload />
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
-          {rsaKeys.privateKey && (
-            <div className="mt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-semibold">Private Key:</span>
-                <button
-                  onClick={() => handleCopy(rsaKeys.privateKey, "Private key")}
-                  className="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded flex items-center"
-                >
-                  <FaCopy className="w-3 h-3" />
-                </button>
-              </div>
-              <div className="relative">
-                <textarea
-                  readOnly
-                  value={rsaKeys.privateKey}
-                  className="w-full p-2 bg-gray-900 border border-gray-700 rounded text-sm font-mono"
-                  rows={3}
-                />
-                <button
-                  onClick={() => handleCopy(rsaKeys.privateKey, "Private key")}
-                  className="absolute right-2 top-2 text-gray-400 hover:text-white"
-                >
-                  <FaCopy className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+
+              <button
+                onClick={downloadKeys}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center"
+              >
+                <FaDownload className="w-4 h-4 mr-2" />
+                Download Both Keys
+              </button>
+            </>
           )}
         </div>
 
         {/* Diffie-Hellman Simulation */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
+        <div className="space-y-4 bg-gray-800 p-6 rounded-lg">
+          <h3 className="text-xl font-semibold text-white flex items-center">
             <FaExchangeAlt className="w-5 h-5 mr-2" />
             Diffie-Hellman Simulation
-          </h2>
+          </h3>
           <button
             onClick={simulateDH}
             disabled={loading.dh}
-            className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold transition flex items-center justify-center"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50"
           >
             <FaRandom className="w-4 h-4 mr-2" />
             {loading.dh ? "Simulating..." : "Simulate DH Exchange"}
           </button>
           {dhSharedSecret && (
-            <div className="mt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-semibold">Shared Secret:</span>
-                <button
-                  onClick={() => handleCopy(dhSharedSecret, "DH Secret")}
-                  className="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded flex items-center"
-                >
-                  <FaCopy className="w-3 h-3" />
-                </button>
-              </div>
+            <div className="relative">
               <textarea
                 readOnly
                 value={dhSharedSecret}
-                className="w-full p-2 bg-gray-900 rounded text-sm font-mono"
-                rows={2}
+                className="w-full h-24 p-2 bg-gray-900 text-gray-300 rounded-md font-mono text-sm"
               />
+              <button
+                onClick={() => handleCopy(dhSharedSecret, "DH Secret")}
+                className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                title="Copy to clipboard"
+              >
+                <FaCopy />
+              </button>
             </div>
           )}
         </div>
 
         {/* Password Generation */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
+        <div className="space-y-4 bg-gray-800 p-6 rounded-lg">
+          <h3 className="text-xl font-semibold text-white flex items-center">
             <FaKey className="w-5 h-5 mr-2" />
             Password Generation
-          </h2>
-          <div className="mb-4">
-            <label className="block text-sm font-semibold mb-2 flex items-center">
-              <FaHashtag className="w-4 h-4 mr-2" />
-              Password Length: {passwordLength}
-            </label>
-            <input
-              type="range"
-              min="8"
-              max="64"
-              value={passwordLength}
-              onChange={(e) => setPasswordLength(parseInt(e.target.value))}
-              className="w-full"
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <label className="flex items-center space-x-2">
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-300 flex items-center">
+                <FaHashtag className="w-4 h-4 mr-2" />
+                Password Length: {passwordLength}
+              </label>
               <input
-                type="checkbox"
-                checked={includeUppercase}
-                onChange={(e) => setIncludeUppercase(e.target.checked)}
-                className="form-checkbox"
+                type="range"
+                min="8"
+                max="64"
+                value={passwordLength}
+                onChange={(e) => setPasswordLength(parseInt(e.target.value))}
+                className="w-full"
               />
-              <span className="text-sm flex items-center">
-                <FaFont className="w-3 h-3 mr-1" />
-                ABC
-              </span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={includeNumbers}
-                onChange={(e) => setIncludeNumbers(e.target.checked)}
-                className="form-checkbox"
-              />
-              <span className="text-sm flex items-center">
-                <FaHashtag className="w-3 h-3 mr-1" />
-                123
-              </span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={includeSymbols}
-                onChange={(e) => setIncludeSymbols(e.target.checked)}
-                className="form-checkbox"
-              />
-              <span className="text-sm flex items-center">
-                <FaAsterisk className="w-3 h-3 mr-1" />
-                @#$
-              </span>
-            </label>
-          </div>
-          <div className="flex space-x-4">
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={includeUppercase}
+                  onChange={(e) => setIncludeUppercase(e.target.checked)}
+                  className="form-checkbox"
+                />
+                <span className="text-sm text-gray-300 flex items-center">
+                  <FaFont className="w-3 h-3 mr-1" />
+                  ABC
+                </span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={includeNumbers}
+                  onChange={(e) => setIncludeNumbers(e.target.checked)}
+                  className="form-checkbox"
+                />
+                <span className="text-sm text-gray-300 flex items-center">
+                  <FaHashtag className="w-3 h-3 mr-1" />
+                  123
+                </span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={includeSymbols}
+                  onChange={(e) => setIncludeSymbols(e.target.checked)}
+                  className="form-checkbox"
+                />
+                <span className="text-sm text-gray-300 flex items-center">
+                  <FaAsterisk className="w-3 h-3 mr-1" />
+                  @#$
+                </span>
+              </label>
+            </div>
             <button
               onClick={generatePassword}
               disabled={loading.password}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold transition flex items-center justify-center"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50"
             >
               <FaRandom className="w-4 h-4 mr-2" />
               {loading.password ? "Generating..." : "Generate Password"}
             </button>
             {password && (
-              <button
-                onClick={() => handleCopy(password, "Password")}
-                className="px-4 bg-gray-600 hover:bg-gray-700 rounded-lg flex items-center justify-center"
-              >
-                <FaCopy className="w-4 h-4" />
-              </button>
+              <div className="relative">
+                <div className="p-4 bg-gray-900 rounded-md text-xl font-mono text-gray-300 text-center break-all">
+                  {password}
+                </div>
+                <button
+                  onClick={() => handleCopy(password, "Password")}
+                  className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                  title="Copy to clipboard"
+                >
+                  <FaCopy />
+                </button>
+              </div>
             )}
           </div>
-          {password && (
-            <div className="mt-4 p-4 bg-gray-900 rounded text-xl font-mono text-center break-all">
-              {password}
-            </div>
-          )}
         </div>
       </div>
     </div>

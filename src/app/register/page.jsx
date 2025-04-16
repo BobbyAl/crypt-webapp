@@ -31,7 +31,7 @@ export default function RegisterPage() {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push("/crypt-webapp/dashboard");
+      router.push(`${basePath}/dashboard`);
     } catch (err) {
       setError("Failed to create an account. Please try again.");
       console.error(err);

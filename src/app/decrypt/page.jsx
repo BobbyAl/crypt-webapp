@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { auth, db } from "@/firebase/config";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { 
   FaLockOpen, 
   FaUpload, 
   FaKey, 
   FaDownload,
-  FaSave
 } from "react-icons/fa";
 
 export default function DecryptPage() {
@@ -20,29 +17,9 @@ export default function DecryptPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
-  const handleSaveFile = async () => {
-    if (!auth.currentUser) {
-      setMessage({ text: "Please login to save files", type: "error" });
-      return;
-    }
-
-    try {
-      await addDoc(collection(db, "users", auth.currentUser.uid, "files"), {
-        name: decryptedFileName,
-        type: "decrypted",
-        method: method.toUpperCase(),
-        createdAt: serverTimestamp()
-      });
-      setMessage({ text: "File saved to account!", type: "success" });
-    } catch (error) {
-      console.error("Error saving file:", error);
-      setMessage({ text: "Failed to save file", type: "error" });
-    }
-  };
-
   const handleDecrypt = async () => {
     if (!file || (!key && method !== "rsa")) {
-      alert("Please select a file and enter a key (except RSA).");
+      setMessage({ text: "Please select a file and enter a key (except RSA).", type: "error" });
       return;
     }
 
@@ -74,24 +51,30 @@ export default function DecryptPage() {
       
       setDecryptedFileName(filename);
       setDecryptedFileUrl(url);
+      setMessage({ text: "File decrypted successfully!", type: "success" });
     } catch (err) {
       console.error("Decryption error:", err);
-      setMessage({ text: "Decryption failed: " + err.message, type: "error" });
+      setMessage({ text: "Error decrypting file: " + err.message, type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center py-12 px-6">
-      <div className="bg-[#111827] rounded-2xl shadow-xl p-10 max-w-xl w-full">
-        <h1 className="text-3xl font-bold mb-6 text-center text-white flex items-center justify-center">
-          Decrypt File <FaLockOpen className="ml-3 w-8 h-8" />
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-xl w-full space-y-8 bg-gray-800 p-8 rounded-xl shadow-xl">
+        <div>
+          <h1 className="text-3xl font-bold text-center text-white flex items-center justify-center">
+            Decrypt File <FaLockOpen className="ml-3 w-8 h-8" />
+          </h1>
+          <p className="mt-2 text-center text-gray-400">
+            Decrypt your files using AES, 3DES, or RSA decryption
+          </p>
+        </div>
 
         {message.text && (
           <div
-            className={`mb-4 p-3 rounded ${
+            className={`p-4 rounded-md ${
               message.type === "error"
                 ? "bg-red-500/10 text-red-500"
                 : "bg-green-500/10 text-green-500"
@@ -101,97 +84,84 @@ export default function DecryptPage() {
           </div>
         )}
 
-        <label className="block text-sm font-semibold mb-2 text-gray-300">
-          <div className="flex items-center">
-            <FaUpload className="w-4 h-4 mr-2" />
-            Upload File
-          </div>
-        </label>
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files[0])}
-          className="mb-4 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm"
-        />
-
-        <label className="block text-sm font-semibold mb-2 text-gray-300">
-          <div className="flex items-center">
-            <FaLockOpen className="w-4 h-4 mr-2" />
-            Decryption Method
-          </div>
-        </label>
-        <select
-          value={method}
-          onChange={(e) => setMethod(e.target.value)}
-          className="mb-4 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm"
-        >
-          <option value="aes">AES</option>
-          <option value="3des">3DES</option>
-          <option value="rsa">RSA (max file size: 190 bytes)</option>
-        </select>
-
-        {method === "rsa" ? (
-          <>
-            <label className="block text-sm font-semibold mb-2 text-gray-300">
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-300">
               <div className="flex items-center">
-                <FaKey className="w-4 h-4 mr-2" />
-                Private Key
-              </div>
-            </label>
-            <textarea
-              placeholder="Paste RSA private key here"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              className="mb-6 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm h-32 font-mono"
-            />
-          </>
-        ) : (
-          <>
-            <label className="block text-sm font-semibold mb-2 text-gray-300">
-              <div className="flex items-center">
-                <FaKey className="w-4 h-4 mr-2" />
-                Decryption Key
+                <FaUpload className="w-4 h-4 mr-2" />
+                Upload File
               </div>
             </label>
             <input
-              type="text"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              className="mb-6 w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm"
-              placeholder="Enter key"
+              type="file"
+              onChange={(e) => setFile(e.target.files[0])}
+              className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
             />
-          </>
-        )}
+          </div>
 
-        <button
-          onClick={handleDecrypt}
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center"
-        >
-          <FaLockOpen className="w-4 h-4 mr-2" />
-          {loading ? "Decrypting..." : "Decrypt"}
-        </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">
+              <div className="flex items-center">
+                <FaLockOpen className="w-4 h-4 mr-2" />
+                Decryption Method
+              </div>
+            </label>
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="aes">AES</option>
+              <option value="3des">3DES</option>
+              <option value="rsa">RSA</option>
+            </select>
+          </div>
 
-        {decryptedFileUrl && (
-          <div className="mt-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300">
+              <div className="flex items-center">
+                <FaKey className="w-4 h-4 mr-2" />
+                {method === "rsa" ? "Private Key" : "Decryption Key"}
+              </div>
+            </label>
+            {method === "rsa" ? (
+              <textarea
+                placeholder="Paste RSA private key here"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm h-32 font-mono focus:ring-blue-500 focus:border-blue-500"
+              />
+            ) : (
+              <input
+                type="text"
+                placeholder="Enter key"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+            )}
+          </div>
+
+          <button
+            onClick={handleDecrypt}
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+          >
+            <FaLockOpen className="w-4 h-4 mr-2" />
+            {loading ? "Decrypting..." : "Decrypt File"}
+          </button>
+
+          {decryptedFileUrl && (
             <a
               href={decryptedFileUrl}
               download={decryptedFileName}
-              className="block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition flex items-center justify-center"
+              className="block w-full text-center bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center"
             >
               <FaDownload className="w-4 h-4 mr-2" />
               Download Decrypted File
             </a>
-            
-            <button
-              onClick={handleSaveFile}
-              disabled={!auth.currentUser}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition flex items-center justify-center disabled:opacity-50"
-            >
-              <FaSave className="w-4 h-4 mr-2" />
-              {auth.currentUser ? "Save to Account" : "Login to Save"}
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
