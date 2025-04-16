@@ -16,9 +16,10 @@ import {
 export default function KeygenPage() {
   const [aesKey, setAesKey] = useState("");
   const [rsaKeys, setRsaKeys] = useState({ publicKey: "", privateKey: "" });
-  const [dhKeys, setDhKeys] = useState({
-    alice: { publicKey: "", privateKey: null },
-    bob: { publicKey: "", privateKey: null },
+  const [dhState, setDhState] = useState({
+    myKeyPair: null,
+    myPublicKey: "",
+    otherPublicKey: "",
     sharedSecret: ""
   });
   const [password, setPassword] = useState("");
@@ -91,60 +92,76 @@ export default function KeygenPage() {
     }
   };
 
-  const simulateDH = async () => {
+  const generateMyDHKey = async () => {
     try {
       setLoading(prev => ({ ...prev, dh: true }));
       const params = { name: "ECDH", namedCurve: "P-256" };
       
-      // Step 1: Generate key pairs for Alice and Bob
-      const alice = await crypto.subtle.generateKey(params, true, ["deriveKey"]);
-      const bob = await crypto.subtle.generateKey(params, true, ["deriveKey"]);
-
-      // Export public keys to display them
-      const alicePubKey = await crypto.subtle.exportKey("spki", alice.publicKey);
-      const bobPubKey = await crypto.subtle.exportKey("spki", bob.publicKey);
-
-      // Step 2: Derive shared secrets
-      const aliceShared = await crypto.subtle.deriveKey(
-        { ...params, public: bob.publicKey },
-        alice.privateKey,
-        { name: "AES-GCM", length: 256 },
-        true,
-        ["encrypt", "decrypt"]
-      );
-
-      const bobShared = await crypto.subtle.deriveKey(
-        { ...params, public: alice.publicKey },
-        bob.privateKey,
-        { name: "AES-GCM", length: 256 },
-        true,
-        ["encrypt", "decrypt"]
-      );
-
-      // Export shared secrets to verify they match
-      const aliceRaw = await crypto.subtle.exportKey("raw", aliceShared);
-      const bobRaw = await crypto.subtle.exportKey("raw", bobShared);
-
-      const alicePubBase64 = btoa(String.fromCharCode(...new Uint8Array(alicePubKey)));
-      const bobPubBase64 = btoa(String.fromCharCode(...new Uint8Array(bobPubKey)));
-      const sharedSecret = btoa(String.fromCharCode(...new Uint8Array(aliceRaw)));
-
-      // Verify both parties derived the same secret
-      const secretsMatch = Buffer.from(aliceRaw).equals(Buffer.from(bobRaw));
+      // Generate my key pair
+      const keyPair = await crypto.subtle.generateKey(params, true, ["deriveKey"]);
+      const publicKeyRaw = await crypto.subtle.exportKey("spki", keyPair.publicKey);
+      const publicKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(publicKeyRaw)));
       
-      setDhKeys({
-        alice: { publicKey: alicePubBase64, privateKey: alice.privateKey },
-        bob: { publicKey: bobPubBase64, privateKey: bob.privateKey },
-        sharedSecret: secretsMatch ? sharedSecret : "Error: Shared secrets don't match"
-      });
+      setDhState(prev => ({
+        ...prev,
+        myKeyPair: keyPair,
+        myPublicKey: publicKeyBase64
+      }));
+      setCopyFeedback('Your DH key pair generated!');
     } catch (err) {
-      console.error("DH Simulation Error:", err);
-      setDhKeys({
-        alice: { publicKey: "", privateKey: null },
-        bob: { publicKey: "", privateKey: null },
-        sharedSecret: "Error during simulation"
-      });
-      setCopyFeedback('Failed to simulate DH exchange');
+      console.error("DH Key Generation Error:", err);
+      setCopyFeedback('Failed to generate DH key');
+    } finally {
+      setLoading(prev => ({ ...prev, dh: false }));
+    }
+  };
+
+  const deriveSharedSecret = async () => {
+    try {
+      if (!dhState.myKeyPair || !dhState.otherPublicKey) {
+        setCopyFeedback('Generate your key and enter other party\'s public key first');
+        return;
+      }
+
+      setLoading(prev => ({ ...prev, dh: true }));
+      
+      // Convert base64 public key back to CryptoKey
+      const binaryStr = atob(dhState.otherPublicKey);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      
+      const params = { name: "ECDH", namedCurve: "P-256" };
+      const otherPublicKey = await crypto.subtle.importKey(
+        "spki",
+        bytes,
+        params,
+        true,
+        []
+      );
+
+      // Derive shared secret
+      const sharedKey = await crypto.subtle.deriveKey(
+        { ...params, public: otherPublicKey },
+        dhState.myKeyPair.privateKey,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+      );
+
+      const sharedKeyRaw = await crypto.subtle.exportKey("raw", sharedKey);
+      const sharedKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(sharedKeyRaw)));
+      
+      setDhState(prev => ({
+        ...prev,
+        sharedSecret: sharedKeyBase64
+      }));
+      setCopyFeedback('Shared secret derived successfully!');
+    } catch (err) {
+      console.error("DH Shared Secret Error:", err);
+      setCopyFeedback('Failed to derive shared secret. Make sure the public key is valid.');
+      setDhState(prev => ({ ...prev, sharedSecret: "" }));
     } finally {
       setLoading(prev => ({ ...prev, dh: false }));
     }
@@ -330,59 +347,78 @@ export default function KeygenPage() {
               Diffie-Hellman Key Exchange
             </h3>
             <p className="text-sm text-gray-400">
-              Simulates how two parties (Alice and Bob) can derive a shared secret by exchanging public keys
+              Generate your key pair, exchange public keys with another party, and derive a shared secret
             </p>
-            <button
-              onClick={simulateDH}
-              disabled={loading.dh}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
-            >
-              <FaRandom className="w-4 h-4 mr-2" />
-              {loading.dh ? "Simulating..." : "Simulate DH Exchange"}
-            </button>
-            {dhKeys.alice.publicKey && (
-              <div className="space-y-4">
+            <div className="space-y-4">
+              <button
+                onClick={generateMyDHKey}
+                disabled={loading.dh}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+              >
+                <FaRandom className="w-4 h-4 mr-2" />
+                {loading.dh ? "Generating..." : "Generate My Key Pair"}
+              </button>
+              
+              {dhState.myPublicKey && (
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">Alice's Public Key</label>
+                  <label className="block text-sm font-medium text-gray-300">Your Public Key</label>
                   <div className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
-                    <code className="text-sm text-gray-300 font-mono break-all">{dhKeys.alice.publicKey}</code>
+                    <code className="text-sm text-gray-300 font-mono break-all">{dhState.myPublicKey}</code>
                     <button
-                      onClick={() => handleCopy(dhKeys.alice.publicKey, "Alice's public key")}
+                      onClick={() => handleCopy(dhState.myPublicKey, "Your public key")}
                       className="ml-2 p-2 text-gray-400 hover:text-white"
                     >
                       <FaCopy className="w-4 h-4" />
                     </button>
                   </div>
+                  <p className="text-sm text-gray-400">Share this public key with the other party</p>
                 </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">Bob's Public Key</label>
-                  <div className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
-                    <code className="text-sm text-gray-300 font-mono break-all">{dhKeys.bob.publicKey}</code>
-                    <button
-                      onClick={() => handleCopy(dhKeys.bob.publicKey, "Bob's public key")}
-                      className="ml-2 p-2 text-gray-400 hover:text-white"
-                    >
-                      <FaCopy className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">Other Party's Public Key</label>
+                <textarea
+                  placeholder="Paste the other party's public key here"
+                  value={dhState.otherPublicKey}
+                  onChange={(e) => setDhState(prev => ({ ...prev, otherPublicKey: e.target.value }))}
+                  className="mt-1 block w-full p-2 border border-gray-600 rounded-md bg-gray-900 text-white text-sm h-32 font-mono focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <button
+                onClick={deriveSharedSecret}
+                disabled={loading.dh || !dhState.myKeyPair || !dhState.otherPublicKey}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition flex items-center justify-center disabled:opacity-50"
+              >
+                <FaKey className="w-4 h-4 mr-2" />
+                {loading.dh ? "Deriving..." : "Derive Shared Secret"}
+              </button>
+
+              {dhState.sharedSecret && (
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-300">Derived Shared Secret</label>
                   <div className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
-                    <code className="text-sm text-gray-300 font-mono break-all">{dhKeys.sharedSecret}</code>
+                    <code className="text-sm text-gray-300 font-mono break-all">{dhState.sharedSecret}</code>
                     <button
-                      onClick={() => handleCopy(dhKeys.sharedSecret, "Shared secret")}
+                      onClick={() => handleCopy(dhState.sharedSecret, "Shared secret")}
                       className="ml-2 p-2 text-gray-400 hover:text-white"
                     >
                       <FaCopy className="w-4 h-4" />
                     </button>
                   </div>
                   <p className="text-sm text-gray-400">
-                    This secret is derived independently by both parties and can be used as an encryption key
+                    Both parties will derive the same secret key independently
                   </p>
+                  <button
+                    onClick={() => downloadSingleKey(dhState.sharedSecret, 'dh-secret.txt')}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition flex items-center justify-center"
+                  >
+                    <FaDownload className="w-4 h-4 mr-2" />
+                    Download Secret
+                  </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Password Generation */}
