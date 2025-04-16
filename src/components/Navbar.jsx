@@ -53,46 +53,44 @@ export default function Navbar() {
                 {isModesOpen ? <FaChevronUp className="ml-2" /> : <FaChevronDown className="ml-2" />}
               </button>
 
-              {isModesOpen && (
-                <div 
-                  className="absolute z-10 top-full left-0 mt-1 w-48 rounded-md shadow-lg bg-[#1F2937] ring-1 ring-black ring-opacity-5"
-                  onMouseEnter={() => setIsModesOpen(true)}
-                  onMouseLeave={() => setIsModesOpen(false)}
-                >
-                  <div className="py-1" role="menu">
-                    <Link
-                      href="/encrypt"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      Encrypt
-                    </Link>
-                    <Link
-                      href="/decrypt"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      Decrypt
-                    </Link>
-                    <Link
-                      href="/hash"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      Hash
-                    </Link>
-                    <Link
-                      href="/keygen"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      Key Generation
-                    </Link>
-                    <Link
-                      href="/steganography"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      Steganography
-                    </Link>
-                  </div>
+              <div 
+                className={`absolute z-10 top-full left-0 mt-2 w-48 rounded-md shadow-xl bg-[#1F2937]/95 backdrop-blur-sm border border-gray-700 transform transition-all duration-200 origin-top ${
+                  isModesOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                }`}
+              >
+                <div className="py-2" role="menu">
+                  <Link
+                    href="/encrypt"
+                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
+                  >
+                    Encrypt
+                  </Link>
+                  <Link
+                    href="/decrypt"
+                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
+                  >
+                    Decrypt
+                  </Link>
+                  <Link
+                    href="/hash"
+                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
+                  >
+                    Hash
+                  </Link>
+                  <Link
+                    href="/keygen"
+                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
+                  >
+                    Key Generation
+                  </Link>
+                  <Link
+                    href="/steganography"
+                    className="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
+                  >
+                    Steganography
+                  </Link>
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
